@@ -1,4 +1,4 @@
-/* 우리집 자산 대시보드 — 실제 셸 (사이드바형) + 라이브 데이터 연결
+/* 우리집 자산 대시보드 — 실제 셸 (상단 탭형) + 라이브 데이터 연결
    wf-data.jsx(더미)와 wf-app.jsx(시안 셸)를 대체한다. */
 
 /* ---------- 표시 유틸 (구 wf-data.jsx에서 이관) ---------- */
@@ -41,10 +41,10 @@ window.postEntries = postEntries;
 /* ---------- 셸 ---------- */
 function BrandMark() { return <span className="brand-mark"><Icon name="home" size={17} stroke={2} /></span>; }
 
-function MonthPicker({ months, month, setMonth }) {
+function MonthPicker({ months, month, onPick }) {
   const i = months.indexOf(month);
   const disp = month ? month.slice(0, 4) + '년 ' + parseInt(month.slice(5), 10) + '월' : '';
-  const go = (d) => { const j = i + d; if (j >= 0 && j < months.length) setMonth(months[j]); };
+  const go = (d) => { const j = i + d; if (j >= 0 && j < months.length) onPick(months[j]); };
   return (
     <div className="month-picker">
       <span className="mp-nav" onClick={() => go(1)} style={{ cursor: 'pointer' }}><Icon name="chevL" size={16} /></span>
@@ -73,7 +73,6 @@ function Dashboard() {
   const [excludeWedding, setExcludeWedding] = React.useState(true);
   const [comp, setComp] = React.useState('donut');
   const [filter, setFilter] = React.useState('all');
-  const [tick, setTick] = React.useState(0);
 
   async function load(m) {
     setErr(null);
@@ -83,18 +82,15 @@ function Dashboard() {
       setMonths(data.months || []);
       setMonth(data.month || '');
       setLoaded(true);
-      setTick(t => t + 1);
     } catch (e) { setErr(e.message); setLoaded(true); }
   }
-  React.useEffect(() => { load(''); }, []);
-  React.useEffect(() => { if (month) load(month); /* eslint-disable-next-line */ }, [month]);
+  React.useEffect(() => { load(''); }, []);   // 최초 1회 (최신 월)
   window.reloadWF = () => load(month);
 
   const tw = { excludeWedding, setExcludeWedding, comp, setComp, filter, setFilter };
-  const cur = VIEWS.find(v => v.id === view);
 
   function Body() {
-    if (err) return <div className="card" style={{ color: 'var(--expense)' }}>⚠ 데이터를 불러오지 못했어요: {err}<br /><span style={{ color: 'var(--ink-2)', fontSize: 13 }}>config.js의 API_URL과 Apps Script 배포를 확인하세요.</span></div>;
+    if (err) return <div className="card" style={{ color: 'var(--expense)' }}>⚠ 데이터를 불러오지 못했어요: {err}<br /><span style={{ color: 'var(--ink-2)', fontSize: 13 }}>config.js의 API_URL과 Apps Script 배포(액세스=모든 사용자)를 확인하세요.</span></div>;
     if (!loaded || !window.WF) return <div className="card" style={{ color: 'var(--ink-2)' }}>불러오는 중…</div>;
     if (view === 'summary') return <SummaryView {...tw} />;
     if (view === 'ledger') return <LedgerView filter={filter} setFilter={setFilter} />;
@@ -102,26 +98,20 @@ function Dashboard() {
   }
 
   return (
-    <div className="dash" key={tick}>
-      <div className="with-sidebar">
-        <nav className="sidebar">
-          <div className="side-brand"><BrandMark />우리집</div>
-          {VIEWS.map(v => (
-            <button key={v.id} className={view === v.id ? 'on' : ''} onClick={() => setView(v.id)}>
-              <Icon name={v.icon} size={18} />{v.label}
-            </button>
-          ))}
-          <div className="side-foot">띠동이 · 쮸쮸 💚</div>
-        </nav>
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-          <div className="dash-header">
-            <div className="brand"><Icon name={cur.icon} size={19} style={{ color: 'var(--ink-2)' }} />{cur.label}</div>
-            <MonthPicker months={months} month={month} setMonth={setMonth} />
-            <HeaderActions />
-          </div>
-          <div className="content"><Body /></div>
-        </div>
+    <div className="dash">
+      <div className="dash-header">
+        <div className="brand"><BrandMark />우리집 자산 대시보드</div>
+        <MonthPicker months={months} month={month} onPick={load} />
+        <HeaderActions />
       </div>
+      <div className="tabnav">
+        {VIEWS.map(v => (
+          <button key={v.id} className={view === v.id ? 'on' : ''} onClick={() => setView(v.id)}>
+            <Icon name={v.icon} size={17} />{v.label}
+          </button>
+        ))}
+      </div>
+      <div className="content"><Body /></div>
     </div>
   );
 }
