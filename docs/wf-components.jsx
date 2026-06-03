@@ -35,7 +35,17 @@ function Kpi({ label, icon, tone, value, unit, delta, accent, hero }) {
 
 /* ---------- 현재 현금 잔액 / 런웨이 (최우선 지표) ---------- */
 function BalanceHero({ cash }) {
-  const c = cash || { balance: 0, income: 0, expense: 0, invested: 0, monthFlow: 0, remainFixed: 0, afterFixed: 0, hasPrev: false };
+  if (!cash) {  // 백엔드(Code.gs) 미재배포 시 — 0원 대신 안내
+    return (
+      <div className="balance-hero">
+        <div className="bh-main">
+          <div className="bh-tag"><Icon name="scale" size={17} style={{ color: 'var(--ink-3)' }} />현재 실제 현금 잔액</div>
+          <div className="chart-note" style={{ marginTop: 6 }}>⚙️ Apps Script(Code.gs)를 새 버전으로 재배포하면 현금 잔액·런웨이가 표시됩니다.</div>
+        </div>
+      </div>
+    );
+  }
+  const c = cash;
   const neg = c.balance < 0;
   const flowNeg = c.monthFlow < 0;
   const afterNeg = c.afterFixed < 0;
