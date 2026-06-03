@@ -2,6 +2,40 @@
 .app-shell { padding: 24px 20px 56px; }
 .viewport.app { width: 100%; max-width: 1180px; margin: 0 auto; border-radius: 22px; }
 
+/* ── 거래 수정 모달 ── */
+.modal-overlay { position: fixed; inset: 0; background: rgba(22,28,45,.36);
+  display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 16px; }
+.modal-card { width: 460px; max-width: 94vw; max-height: 90vh; overflow: auto;
+  background: var(--card); border: 1px solid var(--line); border-radius: 18px;
+  box-shadow: var(--shadow-pop); padding: 22px 24px; }
+.modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.fld { display: block; }
+.fld > span { display: block; font-size: 12px; color: var(--ink-2); font-weight: 600;
+  margin-bottom: 6px; letter-spacing: -.01em; }
+.modal-input { width: 100%; padding: 11px 12px; border: 1px solid var(--line);
+  border-radius: 10px; font: inherit; font-size: 14px; color: var(--ink);
+  background: var(--paper); transition: border-color .15s, box-shadow .15s; }
+.modal-input:focus { outline: none; border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(22,179,100,.14); background: #fff; }
+select.modal-input { appearance: none; -webkit-appearance: none; cursor: pointer;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238A96A6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M6 9l6 6 6-6'/></svg>");
+  background-repeat: no-repeat; background-position: right 11px center; padding-right: 32px; }
+.modal-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
+@media (max-width: 480px) { .modal-grid { grid-template-columns: 1fr; } }
+
+/* ── 거래 구분(수입/지출) 컬러 태그 ── */
+.kind-tag { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 999px;
+  font-size: 12px; font-weight: 700; letter-spacing: -.01em; }
+.kind-tag.income { color: var(--income); background: var(--income-bg); }
+.kind-tag.expense { color: var(--expense); background: var(--expense-bg); }
+
+/* ── 밸런스 카드 신용카드 스트립 ── */
+.cc-strip { flex-basis: 100%; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line);
+  display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+.cc-item { display: flex; flex-direction: column; gap: 2px; }
+.cc-item .l { font-size: 12px; color: var(--ink-2); font-weight: 600; }
+.cc-item .v { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+
 /* 작은 화면(실제 폰)에서 자동 축약 — 시안의 .viewport.mobile 규칙을 미디어쿼리로 */
 @media (max-width: 820px) {
   .app-shell { padding: 12px 10px 40px; }

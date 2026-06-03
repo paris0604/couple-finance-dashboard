@@ -86,11 +86,9 @@ function EditModal({ txn, onClose }) {
   const [memo, setMemo] = React.useState(txn.memo || '');
   const [busy, setBusy] = React.useState(false);
   const cats = kind === '수입' ? INCOME_CATS : EXPENSE_CATS;
-  const inS = { width: '100%', padding: '9px 11px', border: '1px solid var(--line)', borderRadius: 10, font: 'inherit', background: 'var(--paper-2)', color: 'var(--ink)' };
-  const Field = ({ label, children }) => (
-    <label style={{ display: 'block', marginBottom: 12 }}>
-      <div style={{ fontSize: 12, color: 'var(--ink-2)', marginBottom: 5, fontWeight: 600 }}>{label}</div>
-      {children}
+  const Field = ({ label, children, full }) => (
+    <label className="fld" style={full ? { gridColumn: '1 / -1' } : null}>
+      <span>{label}</span>{children}
     </label>
   );
 
@@ -110,26 +108,26 @@ function EditModal({ txn, onClose }) {
   }
 
   return (
-    <div onClick={() => onClose(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(20,24,35,.38)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 16 }}>
-      <div onClick={(e) => e.stopPropagation()} className="card" style={{ width: 440, maxWidth: '94vw', maxHeight: '90vh', overflow: 'auto' }}>
-        <div className="table-toolbar" style={{ justifyContent: 'space-between', marginBottom: 14 }}>
+    <div className="modal-overlay" onClick={() => onClose(false)}>
+      <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+        <div className="table-toolbar" style={{ justifyContent: 'space-between', marginBottom: 18 }}>
           <SectionTitle icon="receipt">거래 수정</SectionTitle>
           <button className="btn ghost sm" onClick={() => onClose(false)}><Icon name="x" size={15} /></button>
         </div>
-        <div className="grid grid-2" style={{ gap: 12 }}>
-          <Field label="날짜"><input type="date" value={date} onChange={(e) => setDate(e.target.value)} style={inS} /></Field>
+        <div className="modal-grid">
+          <Field label="날짜"><input className="modal-input" type="date" value={date} onChange={(e) => setDate(e.target.value)} /></Field>
           <Field label="구분">
-            <select value={kind} onChange={(e) => { const k = e.target.value; setKind(k); const list = k === '수입' ? INCOME_CATS : EXPENSE_CATS; if (!list.includes(cat)) setCat(list[0]); }} style={inS}>
+            <select className="modal-input" value={kind} onChange={(e) => { const k = e.target.value; setKind(k); const list = k === '수입' ? INCOME_CATS : EXPENSE_CATS; if (!list.includes(cat)) setCat(list[0]); }}>
               <option>지출</option><option>수입</option>
             </select>
           </Field>
-          <Field label="분류"><select value={cat} onChange={(e) => setCat(e.target.value)} style={inS}>{cats.map(c => <option key={c} value={c}>{c}</option>)}</select></Field>
-          <Field label="금액(원)"><input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} style={inS} /></Field>
-          <Field label="지출구분"><select value={owner} onChange={(e) => setOwner(e.target.value)} style={inS}>{OWNERS.map(o => <option key={o} value={o}>{o}</option>)}</select></Field>
-          <Field label="결제수단"><select value={pay} onChange={(e) => setPay(e.target.value)} style={inS}>{PAYS.map(p => <option key={p} value={p}>{p || '-'}</option>)}</select></Field>
+          <Field label="분류"><select className="modal-input" value={cat} onChange={(e) => setCat(e.target.value)}>{cats.map(c => <option key={c} value={c}>{c}</option>)}</select></Field>
+          <Field label="금액(원)"><input className="modal-input" type="number" value={amount} onChange={(e) => setAmount(e.target.value)} /></Field>
+          <Field label="지출구분"><select className="modal-input" value={owner} onChange={(e) => setOwner(e.target.value)}>{OWNERS.map(o => <option key={o} value={o}>{o}</option>)}</select></Field>
+          <Field label="결제수단"><select className="modal-input" value={pay} onChange={(e) => setPay(e.target.value)}>{PAYS.map(p => <option key={p} value={p}>{p || '-'}</option>)}</select></Field>
+          <Field label="메모" full><input className="modal-input" value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="가게·내용 등" /></Field>
         </div>
-        <Field label="메모"><input value={memo} onChange={(e) => setMemo(e.target.value)} style={inS} /></Field>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 16 }}>
+        <div className="modal-foot">
           <button className="btn ghost sm" onClick={del} disabled={busy} style={{ color: 'var(--expense)' }}><Icon name="x" size={15} />삭제</button>
           <div style={{ display: 'flex', gap: 8 }}>
             <button className="btn ghost sm" onClick={() => onClose(false)} disabled={busy}>취소</button>

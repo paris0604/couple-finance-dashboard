@@ -55,16 +55,19 @@ function BalanceHero({ cash }) {
         <div className={`bh-num ${neg ? 'neg' : ''}`}>{neg ? '−' : ''}{KRW(Math.abs(c.balance))}</div>
         <div className="chart-note">누적 수입 − 현금·체크·이체 지출 (신용카드 제외)</div>
       </div>
-      <div className="bh-eq" style={{ alignItems: 'center' }}>
-        <span className="pp-pill" style={{ fontSize: 13.5 }}>
-          <Icon name="receipt" size={14} style={{ color: 'var(--expense)' }} />
-          이번 달 신용카드 누계액 <b style={{ color: 'var(--expense)' }}>{WON(c.monthCredit)}</b>
-        </span>
-        <span className="eq-op">→</span>
-        <span style={{ color: 'var(--ink-2)', fontSize: 13.5 }}>
-          카드값 내면 잔액 <b style={{ color: afterNeg ? 'var(--expense)' : 'var(--save)' }}>{afterNeg ? '−' : ''}{WON(Math.abs(c.afterCard))}</b>
-        </span>
-      </div>
+      {c.monthCredit > 0 && (
+        <div className="cc-strip">
+          <div className="cc-item">
+            <span className="l"><Icon name="receipt" size={13} style={{ color: 'var(--expense)', verticalAlign: '-2px' }} /> 이번 달 신용카드 누계</span>
+            <span className="v" style={{ color: 'var(--expense)' }}>{WON(c.monthCredit)}</span>
+          </div>
+          <span className="eq-op" style={{ fontSize: 18 }}>→</span>
+          <div className="cc-item">
+            <span className="l">카드값 결제 후 잔액</span>
+            <span className="v" style={{ color: afterNeg ? 'var(--expense)' : 'var(--save)' }}>{afterNeg ? '−' : ''}{WON(Math.abs(c.afterCard))}</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -256,7 +259,7 @@ function TxnTable({ txns }) {
                   style={{ cursor: 'pointer' }} title="클릭하면 수정/삭제">
 
                 <td className="t-date">{t.date}</td>
-                <td>{t.kind}</td>
+                <td><span className={`kind-tag ${t.kind === '수입' ? 'income' : 'expense'}`}>{t.kind}</span></td>
                 <td><span className="cat"><span className="cat-emoji">{t.emoji}</span>{t.cat}</span></td>
                 <td className={`amt ${t.amount > 0 ? 'in' : 'out'}`}>{t.amount > 0 ? '+' : '−'}{WON(Math.abs(t.amount))}</td>
                 <td><Tag share={t.share} /></td>
