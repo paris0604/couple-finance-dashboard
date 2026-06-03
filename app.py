@@ -213,10 +213,13 @@ with tab_summary:
     m2.metric("💳 총지출", man(summary["총지출"]) + "원",
               delta=man(delta("총지출")) + "원" if prev_summary else None,
               delta_color="inverse")
-    m3.metric("💵 저축액", man(summary["저축액"]) + "원",
-              delta=man(delta("저축액")) + "원" if prev_summary else None)
+    m3.metric("💵 저축여력", man(summary["저축액"]) + "원",
+              delta=man(delta("저축액")) + "원" if prev_summary else None,
+              help="수입−지출 잔여 + 당월 투자납입. '잔여 현금'은 아직 안 쓴 돈이라 "
+                   "저축·투자로 옮겨야 실제 자산이 됩니다.")
     m4.metric("💎 순자산", man(net["순자산"]) + "원",
               help=f"가계잔액 {won(net['가계잔액'])} + 투자 순투입원금 {won(net['투자순투입원금'])}")
+    st.caption("※ 저축률은 '저축여력' 기준(수입−지출). 실제로 예적금·투자로 옮긴 금액이 진짜 저축입니다.")
 
     st.divider()
 
