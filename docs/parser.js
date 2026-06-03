@@ -28,7 +28,9 @@
     '월세': '주거', '관리비': '주거', '대출이자': '주거', '주거': '주거',
     '통신': '통신', '핸드폰': '통신', '휴대폰': '통신', '인터넷': '통신', '요금': '통신',
     '보험': '보험', '구독': '구독', '넷플릭스': '구독', '유튜브': '구독', '멤버십': '구독', '스포티파이': '구독',
-    '교통카드': '교통(정액)', '정기권': '교통(정액)', '원금': '대출원금상환', '대출상환': '대출원금상환',
+    '교통카드': '교통(정액)', '정기권': '교통(정액)',
+    '대출상환': '대출원금상환', '원금상환': '대출원금상환', '대출원금': '대출원금상환',
+    '원금': '대출원금상환', '상환': '대출원금상환', '할부': '대출원금상환',
     '생활용품': '생활용품', '다이소': '생활용품', '휴지': '생활용품', '세제': '생활용품',
     '면도기': '생활용품', '생리대': '생활용품', '화장지': '생활용품',
     '택시': '교통(비정기)', 'ktx': '교통(비정기)', '기차': '교통(비정기)', '주유': '교통(비정기)',
@@ -74,10 +76,11 @@
   }
 
   function detectCat(low) {
-    const isIncome = INCOME_HINTS.some(h => low.includes(h));
+    var compact = low.replace(/\s+/g, '');  // 띄어쓰기 무시 매칭 ("대출 상환"→"대출상환")
+    const isIncome = INCOME_HINTS.some(h => compact.includes(h));
     const keys = Object.keys(KW).sort((a, b) => b.length - a.length); // 긴 키워드 우선
     for (const kw of keys) {
-      if (low.includes(kw)) {
+      if (compact.includes(kw.replace(/\s+/g, ''))) {
         const cat = KW[kw];
         if (cat === null) return [null, true];
         if (INCOME_CATS.includes(cat)) return [cat, true];

@@ -35,7 +35,8 @@ KEYWORD_CATEGORY = {
     "보험": "보험",
     "구독": "구독", "넷플릭스": "구독", "유튜브": "구독", "멤버십": "구독", "스포티파이": "구독",
     "교통카드": "교통(정액)", "정기권": "교통(정액)",
-    "원금": "대출원금상환", "대출상환": "대출원금상환",
+    "대출상환": "대출원금상환", "원금상환": "대출원금상환", "대출원금": "대출원금상환",
+    "원금": "대출원금상환", "상환": "대출원금상환", "할부": "대출원금상환",
     # 변동비
     "생활용품": "생활용품", "다이소": "생활용품", "휴지": "생활용품", "세제": "생활용품",
     "면도기": "생활용품", "생리대": "생활용품", "화장지": "생활용품",
@@ -114,12 +115,12 @@ def _parse_amount(text: str) -> tuple[int | None, str]:
 
 def _detect_category(text: str) -> tuple[str | None, bool]:
     """키워드 매칭 → (분류, 수입여부). 가장 먼저 매칭된 키워드 채택."""
-    is_income = any(h in text for h in INCOME_HINTS)
-    low = text.lower()
+    compact = re.sub(r"\s+", "", text.lower())  # 띄어쓰기 무시 ("대출 상환"→"대출상환")
+    is_income = any(h in compact for h in INCOME_HINTS)
     # 긴(구체적) 키워드 우선 — "신혼여행"이 "여행"보다 먼저 매칭되도록
     for kw in sorted(KEYWORD_CATEGORY, key=len, reverse=True):
         cat = KEYWORD_CATEGORY[kw]
-        if kw in low:
+        if kw.replace(" ", "") in compact:
             if cat is None:  # 급여류 → 분류는 후처리(이름별 급여)
                 return None, True
             if cat in INCOME_CATEGORIES:
