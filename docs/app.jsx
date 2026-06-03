@@ -76,6 +76,15 @@ function HeaderActions() {
   );
 }
 
+/* 입력 필드 (모듈 레벨 — 매 렌더 재생성 방지로 포커스 유지) */
+function MField({ label, children, full }) {
+  return (
+    <label className="fld" style={full ? { gridColumn: '1 / -1' } : null}>
+      <span>{label}</span>{children}
+    </label>
+  );
+}
+
 /* ---------- 거래 수정/삭제 팝업 ---------- */
 function EditModal({ txn, onClose }) {
   const [kind, setKind] = React.useState(txn.kind);
@@ -87,11 +96,7 @@ function EditModal({ txn, onClose }) {
   const [memo, setMemo] = React.useState(txn.memo || '');
   const [busy, setBusy] = React.useState(false);
   const cats = kind === '수입' ? INCOME_CATS : EXPENSE_CATS;
-  const Field = ({ label, children, full }) => (
-    <label className="fld" style={full ? { gridColumn: '1 / -1' } : null}>
-      <span>{label}</span>{children}
-    </label>
-  );
+  const Field = MField;
 
   async function save() {
     if (!amount || amount <= 0) { alert('금액을 확인해 주세요.'); return; }

@@ -324,6 +324,27 @@ function findRowById(sh, id) {
 function doPost(e) {
   try {
     var body = JSON.parse(e.postData.contents || '{}');
+
+    // ── 대출 추가/삭제 ──
+    if (body.action === 'loan_add') {
+      var lsh = ensureLoanTab();
+      var L = body.loan || {};
+      lsh.appendRow([L.name || '대출', L.lender || '', num(L.amount), num(L.rate),
+        Math.round(num(L.term)), L.start || '', L.payDay || '', L.method || '원리금균등', L.memo || '']);
+      return json({ ok: true, added: 1 });
+    }
+    if (body.action === 'loan_delete') {
+      var lsh2 = ensureLoanTab();
+      var vals = lsh2.getDataRange().getValues();
+      for (var li = 1; li < vals.length; li++) {
+        if (String(vals[li][0]) === String(body.name) &&
+            Math.round(num(vals[li][2])) === Math.round(num(body.amount))) {
+          lsh2.deleteRow(li + 1); return json({ ok: true, deleted: 1 });
+        }
+      }
+      return json({ ok: false, error: '대출을 찾을 수 없습니다' });
+    }
+
     var sh = SpreadsheetApp.openById(CONFIG.LEDGER_ID).getSheetByName(CONFIG.LEDGER_TAB);
     if (!sh) return json({ ok: false, error: '가계부 탭을 찾을 수 없습니다' });
 
