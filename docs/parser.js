@@ -132,8 +132,19 @@
       date: fmtDate(d), dateLabel: label(d), kind,
       cat: cat || '기타', emoji: EMOJI[cat] || '📦',
       amount: amount || 0, owner, share: SHARE_OF[owner],
-      pay: '', memo: raw.trim(),
+      pay: '', memo: cleanMemo(raw),
     };
+  }
+
+  function cleanMemo(raw) {
+    // 메모에서 금액·날짜·구분태그 제거 (금액은 별도 저장됨). 가게/키워드만 남김.
+    return raw
+      .replace(/\d+(?:\.\d+)?\s*(?:억|만|천|원)/g, '')          // 금액 단위 (3.2만, 80만)
+      .replace(/(그저께|그제|어제|오늘)/g, '')                    // 상대 날짜
+      .replace(/(?:\d{4}[-/.])?\d{1,2}[-/.]\d{1,2}/g, '')        // 절대 날짜 (6/1) ← 숫자 제거보다 먼저
+      .replace(/\d[\d,]*\s*원?/g, '')                            // 남은 순수 숫자
+      .replace(/[\[\(](공통|지영|승화)[\]\)]/g, '')              // 지출구분 태그
+      .replace(/\s+/g, ' ').trim();
   }
 
   window.parseQuick = function (text) {

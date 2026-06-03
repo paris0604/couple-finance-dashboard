@@ -33,47 +33,38 @@ function Kpi({ label, icon, tone, value, unit, delta, accent, hero }) {
   );
 }
 
-/* ---------- 현재 현금 잔액 / 런웨이 (최우선 지표) ---------- */
+/* ---------- 현재 통장 잔여 현금 (최우선 지표) ---------- */
 function BalanceHero({ cash }) {
   if (!cash) {  // 백엔드(Code.gs) 미재배포 시 — 0원 대신 안내
     return (
       <div className="balance-hero">
         <div className="bh-main">
-          <div className="bh-tag"><Icon name="scale" size={17} style={{ color: 'var(--ink-3)' }} />현재 실제 현금 잔액</div>
-          <div className="chart-note" style={{ marginTop: 6 }}>⚙️ Apps Script(Code.gs)를 새 버전으로 재배포하면 현금 잔액·런웨이가 표시됩니다.</div>
+          <div className="bh-tag"><Icon name="scale" size={17} style={{ color: 'var(--ink-3)' }} />현재 잔여 현금</div>
+          <div className="chart-note" style={{ marginTop: 6 }}>⚙️ Apps Script(Code.gs)를 새 버전으로 재배포하면 잔여 현금이 표시됩니다.</div>
         </div>
       </div>
     );
   }
   const c = cash;
   const neg = c.balance < 0;
-  const flowNeg = c.monthFlow < 0;
-  const afterNeg = c.afterFixed < 0;
+  const afterNeg = c.afterCard < 0;
   return (
     <div className={`balance-hero ${neg ? 'is-neg' : ''}`}>
       <div className="bh-main">
-        <div className="bh-tag"><Icon name="scale" size={17} style={{ color: 'var(--ink-3)' }} />현재 실제 현금 잔액 · 누적</div>
+        <div className="bh-tag"><Icon name="scale" size={17} style={{ color: 'var(--ink-3)' }} />현재 잔여 현금 · 통장 기준</div>
         <div className={`bh-num ${neg ? 'neg' : ''}`}>{neg ? '−' : ''}{KRW(Math.abs(c.balance))}</div>
-        <div className="chart-note">누적 수입 − 지출 − 투자납입 (지난달 이월 포함)</div>
+        <div className="chart-note">누적 수입 − 현금·체크·이체 지출 (신용카드 제외)</div>
       </div>
-      <div className="bh-eq">
-        <span style={{ color: 'var(--ink-3)', fontWeight: 600 }}>이번 달 흐름</span>
-        <div className="eq-item income"><span>수입</span><span className="v">{KRW(c.income)}</span></div>
-        <span className="eq-op">−</span>
-        <div className="eq-item expense"><span>지출</span><span className="v">{KRW(c.expense)}</span></div>
-        <span className="eq-op">−</span>
-        <div className="eq-item" style={{ color: 'var(--nw-invest)' }}><span>투자</span><span className="v">{KRW(c.invested)}</span></div>
-        <span className="eq-op">=</span>
-        <div className="eq-item"><span>순흐름</span><span className="v" style={{ color: flowNeg ? 'var(--expense)' : 'var(--save)' }}>{flowNeg ? '−' : '+'}{KRW(Math.abs(c.monthFlow))}</span></div>
+      <div className="bh-eq" style={{ alignItems: 'center' }}>
+        <span className="pp-pill" style={{ fontSize: 13.5 }}>
+          <Icon name="receipt" size={14} style={{ color: 'var(--expense)' }} />
+          이번 달 신용카드 누계액 <b style={{ color: 'var(--expense)' }}>{WON(c.monthCredit)}</b>
+        </span>
+        <span className="eq-op">→</span>
+        <span style={{ color: 'var(--ink-2)', fontSize: 13.5 }}>
+          카드값 내면 잔액 <b style={{ color: afterNeg ? 'var(--expense)' : 'var(--save)' }}>{afterNeg ? '−' : ''}{WON(Math.abs(c.afterCard))}</b>
+        </span>
       </div>
-      {c.hasPrev && c.remainFixed > 0 && (
-        <div style={{ flexBasis: '100%', marginTop: 14, paddingTop: 14, borderTop: '1px solid var(--line)', display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap', fontSize: 13.5 }}>
-          <span style={{ color: 'var(--ink-2)' }}>아직 안 나간 고정비(예상) <b style={{ color: 'var(--fixed-c)' }}>{KRW(c.remainFixed)}</b></span>
-          <span className="eq-op">→</span>
-          <span style={{ color: 'var(--ink-2)' }}>다 나가면 현금 잔액 <b style={{ color: afterNeg ? 'var(--expense)' : 'var(--save)' }}>{afterNeg ? '−' : ''}{KRW(Math.abs(c.afterFixed))}</b> {afterNeg ? '⚠️ 부족 주의' : '🟢 여유'}</span>
-          <span style={{ color: 'var(--ink-3)', fontSize: 11.5 }}>· 지난달 고정비 기준 추정</span>
-        </div>
-      )}
     </div>
   );
 }
@@ -114,9 +105,10 @@ function Donut({ data, colors, size = 120 }) {
   );
 }
 
-/* ---------- 가로 막대 (옵션: 아이콘칩) ---------- */
-function Bars({ data, color = 'var(--expense)' }) {
-  const max = Math.max(...data.map(d => d.amount));
+/* ---------- 가로 막대 (옵션: 아이콘칩, 공통 max) ---------- */
+function Bars({ data, color = 'var(--expense)', max }) {
+  if (!data.length) return null;
+  max = max || Math.max(...data.map(d => d.amount));
   return (
     <div className="bars">
       {data.map((d, i) => (
@@ -264,7 +256,7 @@ function TxnTable({ txns }) {
                 <td className="t-date">{t.date}</td>
                 <td>{t.kind}</td>
                 <td><span className="cat"><span className="cat-emoji">{t.emoji}</span>{t.cat}</span></td>
-                <td className={`amt ${t.amount > 0 ? 'in' : 'out'}`}>{t.amount > 0 ? '+' : '−'}{KRW(Math.abs(t.amount))}</td>
+                <td className={`amt ${t.amount > 0 ? 'in' : 'out'}`}>{t.amount > 0 ? '+' : '−'}{WON(Math.abs(t.amount))}</td>
                 <td><Tag share={t.share} /></td>
                 <td style={{ color: 'var(--ink-2)' }}>{t.pay || '-'}</td>
                 <td className="t-memo">{t.memo}</td>

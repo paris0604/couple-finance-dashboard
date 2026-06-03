@@ -192,27 +192,15 @@ function buildWF(month) {
   };
   // 현금 흐름 / 런웨이 — 수입 − 실제지출 − 이번달 투자 = 잔여 현금,
   // 그리고 '아직 안 나간 고정비(지난달 기준)'를 빼면 월말 예상 잔여
-  var monthInvested = 0;
-  I.forEach(function (r) { if (r._ym === month) monthInvested += r._val; });
-  if (monthInvested < 0) monthInvested = 0;
-  var mi = months.indexOf(month);
-  var prevMonth = (mi >= 0 && mi + 1 < months.length) ? months[mi + 1] : null;
-  var expectedFixed = fixed;
-  if (prevMonth) {
-    var pexp = L.filter(function (r) { return r._ym === prevMonth && r['구분'] === '지출'; });
-    expectedFixed = sum(pexp.filter(function (r) { return FIXED.indexOf(r['분류']) >= 0; }));
-  }
-  var paidFixed = fixed;
-  var remainFixed = Math.max(expectedFixed - paidFixed, 0);
-  var realExpense = totalWith;
-  var monthFlow = incomeTotal - realExpense - monthInvested;   // 이번 달 순흐름
+  // 통장 잔액 = 누적(수입 − 통장에서 실제로 빠진 지출). 신용카드 이번 달분은 아직 안 빠졌으니 잔액에 남김.
+  // cashBalance = houseBal − 투자 (전체 지출 차감) 이므로, 이번 달 신용카드분을 더해 통장 실잔액으로 보정.
+  var monthCredit = sum(exp.filter(function (r) { return r['결제수단'] === '신용카드'; }));
+  var accountBalance = cashBalance + monthCredit;
   var cash = {
-    balance: cashBalance,             // ★ 현재 실제 현금 잔액 (누적)
-    income: incomeTotal, expense: realExpense, invested: monthInvested,
-    monthFlow: monthFlow,             // 이번 달 수입−지출−투자
-    expectedFixed: expectedFixed, paidFixed: paidFixed, remainFixed: remainFixed,
-    afterFixed: cashBalance - remainFixed,   // 남은 고정비 다 나가면 예상 잔액
-    hasPrev: !!prevMonth,
+    balance: accountBalance,    // ★ 현재 통장 잔여 현금 (신용카드 누계 제외)
+    afterCard: cashBalance,     // 이번 달 카드값 결제 후 잔액
+    monthCredit: monthCredit,   // 이번 달 신용카드 누계액 (곧 빠질 돈)
+    income: incomeTotal, expense: totalWith,
   };
 
   var wf = {

@@ -21,7 +21,7 @@ function SummaryView({ excludeWedding, setExcludeWedding, comp, setComp }) {
       </div>
 
       <div className="table-toolbar" style={{ justifyContent: 'space-between' }}>
-        <span className="chart-note">※ 아래는 ‘현재 실제 현금 잔액’(지난달 이월 포함). 아직 안 나간 고정비를 빼면 진짜 여유가 보여요.</span>
+        <span className="chart-note">※ 아래 ‘잔여 현금’은 통장 기준(현금·체크·이체). 신용카드는 누계로 따로 표시돼요.</span>
         <Toggle on={excludeWedding} onChange={setExcludeWedding}>웨딩 지출 제외하고 보기</Toggle>
       </div>
 
@@ -92,7 +92,17 @@ function LedgerView({ filter, setFilter }) {
             ))}
           </div>
         </div>
-        <Bars data={sorted.map(c => { const ic = catOf(c.label); const toneVar = ic.tone === 'gray' ? 'gray-t' : ic.tone; return { label: c.label, emoji: c.emoji, amount: c.amount, color: `var(--${toneVar})` }; })} />
+        {(() => {
+          const rows = sorted.map(c => { const ic = catOf(c.label); const toneVar = ic.tone === 'gray' ? 'gray-t' : ic.tone; return { label: c.label, emoji: c.emoji, amount: c.amount, color: `var(--${toneVar})` }; });
+          const gmax = Math.max(...rows.map(r => r.amount), 1);
+          const mid = Math.ceil(rows.length / 2);
+          return (
+            <div className="grid grid-2" style={{ alignItems: 'start' }}>
+              <Bars data={rows.slice(0, mid)} max={gmax} />
+              <Bars data={rows.slice(mid)} max={gmax} />
+            </div>
+          );
+        })()}
       </div>
 
       <div className="card wide">

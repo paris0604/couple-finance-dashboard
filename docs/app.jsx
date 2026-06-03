@@ -7,9 +7,10 @@ const KRW = (n) => {
   if (Math.abs(man) >= 10000) return (man / 10000).toFixed(man % 10000 === 0 ? 0 : 1) + '억';
   return man.toLocaleString('ko-KR', { maximumFractionDigits: 1 }) + '만';
 };
+const WON = (n) => Math.round(n || 0).toLocaleString('ko-KR') + '원';   // 정확한 원 단위(쉼표)
 const SHARE_COLOR = { common: 'var(--tag-common)', jiyoung: 'var(--tag-jiyoung)', seunghwa: 'var(--tag-seunghwa)' };
 const SHARE_LABEL = { common: '공통', jiyoung: '지영', seunghwa: '승화' };
-Object.assign(window, { KRW, SHARE_COLOR, SHARE_LABEL });
+Object.assign(window, { KRW, WON, SHARE_COLOR, SHARE_LABEL });
 
 const API = window.API_URL || '';
 const VIEWS = [

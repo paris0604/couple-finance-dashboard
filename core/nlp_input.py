@@ -189,4 +189,15 @@ def parse(text: str, today: dt.date | None = None) -> ParsedEntry:
     if cat == "용돈" and e.지출구분 == "공통" and person in MEMBERS:
         e.지출구분 = person
 
+    e.메모 = _clean_memo(raw)  # 금액·날짜는 별도 저장되므로 메모에서 제거
     return e
+
+
+def _clean_memo(raw: str) -> str:
+    """메모에서 금액·날짜·구분태그 제거 → 가게/키워드만 남김."""
+    s = re.sub(r"\d+(?:\.\d+)?\s*(?:억|만|천|원)", "", raw)      # 금액 단위
+    s = re.sub(r"(그저께|그제|어제|오늘)", "", s)                # 상대 날짜
+    s = re.sub(r"(?:\d{4}[-/.])?\d{1,2}[-/.]\d{1,2}", "", s)     # 절대 날짜 ← 숫자 제거보다 먼저
+    s = re.sub(r"\d[\d,]*\s*원?", "", s)                         # 남은 숫자
+    s = re.sub(r"[\[\(](공통|지영|승화)[\]\)]", "", s)
+    return re.sub(r"\s+", " ", s).strip()
