@@ -249,7 +249,7 @@ with tab_assets:
         st.dataframe(
             comp_disp, use_container_width=True, hide_index=True,
             column_config={
-                "금액": st.column_config.NumberColumn("금액", format="%d원"),
+                "금액": st.column_config.NumberColumn("금액", format="%,d원"),
                 "비중": st.column_config.ProgressColumn("비중", format="%.0f%%",
                                                        min_value=0, max_value=1),
             },
@@ -259,7 +259,7 @@ with tab_assets:
             with st.expander("투자 전략별 보기 (core/dividend/growth 등)"):
                 st.dataframe(strat, use_container_width=True, hide_index=True,
                              column_config={"순투입원금": st.column_config.NumberColumn(
-                                 "순투입원금", format="%d원")})
+                                 "순투입원금", format="%,d원")})
 
     st.divider()
 
@@ -314,13 +314,13 @@ with tab_assets:
             disp, use_container_width=True, hide_index=True,
             column_config={
                 "기간": "기간",
-                "수입": st.column_config.NumberColumn("수입", format="%d원"),
-                "고정비": st.column_config.NumberColumn("고정비", format="%d원"),
-                "변동비": st.column_config.NumberColumn("변동비", format="%d원"),
-                "용돈": st.column_config.NumberColumn("용돈", format="%d원"),
-                "총지출": st.column_config.NumberColumn("총지출", format="%d원"),
-                "투자납입": st.column_config.NumberColumn("투자납입", format="%d원"),
-                "저축액": st.column_config.NumberColumn("저축액", format="%d원"),
+                "수입": st.column_config.NumberColumn("수입", format="%,d원"),
+                "고정비": st.column_config.NumberColumn("고정비", format="%,d원"),
+                "변동비": st.column_config.NumberColumn("변동비", format="%,d원"),
+                "용돈": st.column_config.NumberColumn("용돈", format="%,d원"),
+                "총지출": st.column_config.NumberColumn("총지출", format="%,d원"),
+                "투자납입": st.column_config.NumberColumn("투자납입", format="%,d원"),
+                "저축액": st.column_config.NumberColumn("저축액", format="%,d원"),
                 "저축률": st.column_config.NumberColumn("저축률", format="%.0f%%"),
             },
         )
@@ -422,7 +422,7 @@ with tab_ledger:
     st.dataframe(
         m.sort_values("날짜", ascending=False),
         use_container_width=True, hide_index=True,
-        column_config={"금액": st.column_config.NumberColumn("금액", format="%d원")},
+        column_config={"금액": st.column_config.NumberColumn("금액", format="%,d원")},
     )
 
 
@@ -470,7 +470,7 @@ with tab_invest:
     iv["date"] = iv["date"].dt.strftime("%Y-%m-%d")
     st.dataframe(
         iv.sort_values("date", ascending=False), use_container_width=True, hide_index=True,
-        column_config={"투입원화": st.column_config.NumberColumn("투입원화", format="%d원")},
+        column_config={"투입원화": st.column_config.NumberColumn("투입원화", format="%,d원")},
     )
 
     st.info("ℹ️ **2차 예정**: 평가손익(현재시세×환율) — 데이터 모델은 동일하므로 언제든 얹을 수 있습니다 (PRD §8).")
