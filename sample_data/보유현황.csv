@@ -1,0 +1,14 @@
+txn_id,date,action,ticker,quantity,price,currency,fx_rate,fee_krw,account,strategy,note,schema_version
+IV00001,2026-03-26,buy,VOO,1,500,USD,1340,1000,키움 해외,core,S&P500 적립,1
+IV00002,2026-03-26,buy,SCHD,3,28,USD,1340,800,키움 해외,dividend,배당성장,1
+IV00003,2026-03-27,buy,360750,5,18500,KRW,1,0,미래 연금,core,TIGER S&P500 연금,1
+IV00004,2026-03-27,buy,305720,4,12000,KRW,1,0,미래 연금,growth,KODEX 2차전지,1
+IV00005,2026-04-26,buy,VOO,1,500,USD,1355,1000,키움 해외,core,S&P500 적립,1
+IV00006,2026-04-26,buy,SCHD,3,28,USD,1355,800,키움 해외,dividend,배당성장,1
+IV00007,2026-04-27,buy,360750,5,18500,KRW,1,0,미래 연금,core,TIGER S&P500 연금,1
+IV00008,2026-04-27,buy,305720,4,12000,KRW,1,0,미래 연금,growth,KODEX 2차전지,1
+IV00009,2026-05-26,buy,VOO,1,500,USD,1325,1000,키움 해외,core,S&P500 적립,1
+IV00010,2026-05-26,buy,SCHD,3,28,USD,1325,800,키움 해외,dividend,배당성장,1
+IV00011,2026-05-27,buy,360750,5,18500,KRW,1,0,미래 연금,core,TIGER S&P500 연금,1
+IV00012,2026-05-27,buy,305720,4,12000,KRW,1,0,미래 연금,growth,KODEX 2차전지,1
+IV09001,2026-05-20,sell,305720,2,13500,KRW,1,0,미래 연금,growth,일부 차익실현,1

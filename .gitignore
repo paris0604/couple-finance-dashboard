@@ -1,0 +1,10 @@
+# 절대 커밋 금지 — 서비스 계정 키
+.streamlit/secrets.toml
+.streamlit/service_account.json
+*service_account*.json
+
+__pycache__/
+*.pyc
+.DS_Store
+.venv/
+.streamlit/cloud_secrets.toml

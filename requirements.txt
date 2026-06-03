@@ -1,0 +1,6 @@
+streamlit>=1.36
+pandas>=2.0
+altair>=5.0
+# Google Sheets 연동(선택) — 샘플 모드만 쓸 거면 없어도 됩니다
+gspread>=6.0
+google-auth>=2.30
