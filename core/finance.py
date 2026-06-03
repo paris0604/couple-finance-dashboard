@@ -199,11 +199,13 @@ def household_balance(ledger: pd.DataFrame, upto_ym: str | None = None) -> float
 
 
 def net_worth(ledger: pd.DataFrame, invest: pd.DataFrame, upto_ym: str | None = None) -> dict:
-    cash = household_balance(ledger, upto_ym)
+    # 투자한 돈은 가계 현금에서 빠져나간 것 → 현금잔액 = 누적(수입−지출) − 투자납입.
+    # 순자산 = 현금잔액 + 투자 = 누적(수입−지출). (투자금 이중계산 방지)
+    house = household_balance(ledger, upto_ym)
     if upto_ym:
         invest = invest[invest["연월"] <= upto_ym]
     principal = invested_principal(invest)
-    return {"가계잔액": cash, "투자순투입원금": principal, "순자산": cash + principal}
+    return {"가계잔액": house - principal, "투자순투입원금": principal, "순자산": house}
 
 
 # ──────────────────────────────────────────────────────────────
@@ -214,9 +216,10 @@ def net_worth_trend(ledger: pd.DataFrame, invest: pd.DataFrame) -> pd.DataFrame:
     months = sorted(set(ledger["연월"]) | set(invest["연월"]))
     rows = []
     for ym in months:
-        cash = household_balance(ledger, ym)
+        house = household_balance(ledger, ym)
         inv = float(invest[invest["연월"] <= ym]["투입원화"].sum())
-        rows.append({"연월": ym, "가계현금": cash, "투자": inv, "순자산": cash + inv})
+        # 현금 = 누적(수입−지출) − 투자, 순자산 = 누적(수입−지출)
+        rows.append({"연월": ym, "가계현금": house - inv, "투자": inv, "순자산": house})
     return pd.DataFrame(rows)
 
 
@@ -253,12 +256,14 @@ def flow_table(ledger: pd.DataFrame, invest_mmap: dict[str, float],
 
 def asset_composition(ledger: pd.DataFrame, invest: pd.DataFrame,
                       upto_ym: str | None = None) -> pd.DataFrame:
-    """현재 순자산을 자산 카테고리별로 분해 (가계현금 + 투자 계좌별)."""
-    cash = household_balance(ledger, upto_ym)
+    """현재 순자산을 자산 카테고리별로 분해 (현금잔액 + 투자 계좌별)."""
     inv = invest
     if upto_ym:
         inv = inv[inv["연월"] <= upto_ym]
-    rows = [{"자산": "💵 가계 현금잔액", "금액": cash}]
+    principal = invested_principal(inv)
+    # 현금 = 누적(수입−지출) − 투자납입 (투자로 옮긴 돈은 현금에서 제외)
+    cash = household_balance(ledger, upto_ym) - principal
+    rows = [{"자산": "💵 현금 잔액", "금액": cash}]
     by_acct = inv.groupby("account")["투입원화"].sum()
     for acct, amt in by_acct.items():
         rows.append({"자산": f"📈 투자·{acct}", "금액": float(amt)})

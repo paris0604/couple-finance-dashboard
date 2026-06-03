@@ -133,9 +133,12 @@ function buildWF(month) {
   L.forEach(function (r) { if (r._ym <= month) houseBal += (r['구분'] === '수입' ? r._amt : -r._amt); });
   var investPrin = 0;
   I.forEach(function (r) { if (r._ym <= month) investPrin += r._val; });
+  // 현금 잔액 = 누적(수입−지출) − 투자납입 (투자한 돈은 현금에서 빠진 것)
+  // 순자산 = 현금잔액 + 투자 = 누적 수입−지출 (이중계산 없음)
+  var cashBalance = houseBal - investPrin;
   var networth = {
-    total: houseBal + investPrin,
-    parts: [{ label: '가계 잔액', amount: houseBal }, { label: '투자 순투입', amount: investPrin }],
+    total: houseBal,
+    parts: [{ label: '현금 잔액', amount: cashBalance }, { label: '투자', amount: investPrin }],
   };
 
   // trend (최근 6개월, 웨딩 제외 기준)
@@ -202,11 +205,14 @@ function buildWF(month) {
   var paidFixed = fixed;
   var remainFixed = Math.max(expectedFixed - paidFixed, 0);
   var realExpense = totalWith;
-  var remainCash = incomeTotal - realExpense - monthInvested;
+  var monthFlow = incomeTotal - realExpense - monthInvested;   // 이번 달 순흐름
   var cash = {
+    balance: cashBalance,             // ★ 현재 실제 현금 잔액 (누적)
     income: incomeTotal, expense: realExpense, invested: monthInvested,
-    remainCash: remainCash, expectedFixed: expectedFixed, paidFixed: paidFixed,
-    remainFixed: remainFixed, afterFixed: remainCash - remainFixed, hasPrev: !!prevMonth,
+    monthFlow: monthFlow,             // 이번 달 수입−지출−투자
+    expectedFixed: expectedFixed, paidFixed: paidFixed, remainFixed: remainFixed,
+    afterFixed: cashBalance - remainFixed,   // 남은 고정비 다 나가면 예상 잔액
+    hasPrev: !!prevMonth,
   };
 
   var wf = {

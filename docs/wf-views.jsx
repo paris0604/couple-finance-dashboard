@@ -21,7 +21,7 @@ function SummaryView({ excludeWedding, setExcludeWedding, comp, setComp }) {
       </div>
 
       <div className="table-toolbar" style={{ justifyContent: 'space-between' }}>
-        <span className="chart-note">※ 아래 ‘잔여 현금’은 수입 − 지출 − 투자. 아직 안 나간 고정비를 빼면 실제 여유가 보여요.</span>
+        <span className="chart-note">※ 아래는 ‘현재 실제 현금 잔액’(지난달 이월 포함). 아직 안 나간 고정비를 빼면 진짜 여유가 보여요.</span>
         <Toggle on={excludeWedding} onChange={setExcludeWedding}>웨딩 지출 제외하고 보기</Toggle>
       </div>
 
@@ -31,7 +31,7 @@ function SummaryView({ excludeWedding, setExcludeWedding, comp, setComp }) {
         <div className="nw-main">
           <SectionTitle icon="gem">합산 순자산</SectionTitle>
           <div className="nw-num">{KRW(WF.networth.total)}</div>
-          <div className="chart-note">가계 잔액 + 투자 순투입원금</div>
+          <div className="chart-note">현금 잔액 + 투자 (= 누적 수입 − 지출)</div>
         </div>
         <Donut size={110} data={WF.networth.parts.map(p => ({ label: p.label, amount: p.amount }))} colors={['var(--nw-house)', 'var(--nw-invest)']} />
       </div>
