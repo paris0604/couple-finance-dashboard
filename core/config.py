@@ -81,6 +81,35 @@ CATEGORY_EMOJI = {
 }
 
 # ──────────────────────────────────────────────────────────────
+# 디자인 토큰 (Design Handoff — wf-style.css :root 이식)
+# 의미색 3 + 사람색 3 + 차트색만 사용. 임의 색 추가 금지.
+# ──────────────────────────────────────────────────────────────
+COLOR = {
+    # 표면 / 텍스트
+    "paper": "#F5F6F9", "card": "#FFFFFF", "ink": "#2E3138",
+    "ink2": "#717784", "ink3": "#A6ABB5", "line": "#ECEEF1",
+    # 브랜드(그린) — primary 액션 전용
+    "brand": "#16B364", "brand_700": "#109456", "brand_bg": "#E5F6EE",
+    # 의미색
+    "income": "#3E92CF", "income_bg": "#E4F1FA",   # 수입 = 블루
+    "expense": "#FF8E78", "expense_bg": "#FFE8E1",  # 지출 = 로즈
+    "save": "#3FC489", "save_bg": "#E2F7EE",        # 저축 = 민트
+    # 사람(지출구분) — 공통=슬레이트 / 지영=앰버 / 승화=그린
+    "person_공통": "#93A0AF", "person_지영": "#FBB13C", "person_승화": "#3FC489",
+    "person_공통_bg": "#EDF0F3", "person_지영_bg": "#FFF3DA", "person_승화_bg": "#E2F7EE",
+    # 차트 전용
+    "fixed": "#A98AE6", "variable": "#FF9B86",       # 고정=라벤더 / 변동=코랄
+    "nw_house": "#3E92CF", "nw_invest": "#FBB13C",   # 순자산: 가계=블루 / 투자=옥로
+}
+# 계좌/전략 도넛 팔레트 (순자산 팔레트와 분리)
+ACCOUNT_PALETTE = ["#3E92CF", "#FF9B86", "#76BFE0", "#FBB13C", "#A98AE6", "#3FC489"]
+
+
+def person_color(share: str) -> str:
+    return COLOR.get(f"person_{share}", COLOR["person_공통"])
+
+
+# ──────────────────────────────────────────────────────────────
 # 투자 시트 스키마 (PRD §8, 기존 보유현황 — 읽기 전용)
 # ──────────────────────────────────────────────────────────────
 INVEST_SHEET = "transactions"  # 실제 구글시트 탭 이름 (파일명: 포트폴리오)

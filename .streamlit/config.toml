@@ -1,10 +1,10 @@
-# 밝은 화이트톤 베이스 (PRD §11)
+# Design Handoff 토큰 반영 — 파스텔 SaaS · Pretendard
 [theme]
 base = "light"
-primaryColor = "#3B82F6"
-backgroundColor = "#FFFFFF"
-secondaryBackgroundColor = "#F6F8FB"
-textColor = "#1F2937"
+primaryColor = "#16B364"            # 브랜드 그린 (primary 액션)
+backgroundColor = "#F5F6F9"         # paper
+secondaryBackgroundColor = "#FFFFFF" # card
+textColor = "#2E3138"               # ink
 font = "sans serif"
 
 [server]

@@ -19,24 +19,77 @@ from core import nlp_input as NLP
 
 st.set_page_config(page_title="우리집 자산 대시보드", page_icon="🏡", layout="wide")
 
-# ── 가벼운 스타일 (카드 기반, 화이트톤) ─────────────────────────
+# ── 디자인 시스템 (Design Handoff 토큰 이식) ─────────────────────
 st.markdown("""
 <style>
-  .block-container {padding-top: 2rem; max-width: 1200px;}
-  div[data-testid="stMetric"] {
-      background: #FFFFFF; border: 1px solid #EEF1F5;
-      border-radius: 16px; padding: 18px 20px;
-      box-shadow: 0 1px 3px rgba(16,24,40,.06);
-  }
-  .hero {background: linear-gradient(135deg,#EFF6FF,#F0FDF4);
-         border-radius:20px; padding:26px 30px; border:1px solid #E5EEFB;}
-  .hero h1 {font-size:3.4rem; margin:0; color:#1E40AF;}
-  .insight {background:#FFFFFF; border:1px solid #EEF1F5; border-radius:14px;
-            padding:16px 18px; height:100%; box-shadow:0 1px 3px rgba(16,24,40,.05);}
-  .insight .t {font-weight:700; font-size:1.02rem; margin-bottom:6px;}
-  .insight .b {color:#475569; font-size:.9rem; white-space:pre-line; line-height:1.5;}
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css');
+:root{
+  --paper:#F5F6F9; --card:#FFFFFF; --ink:#2E3138; --ink2:#717784; --line:#ECEEF1;
+  --brand:#16B364; --income:#3E92CF; --expense:#FF8E78; --save:#3FC489;
+  --person-c:#93A0AF; --person-j:#FBB13C; --person-s:#3FC489;
+  --shadow:0 1px 2px rgba(22,28,45,.04), 0 5px 18px rgba(22,28,45,.05);
+}
+html, body, [class*="css"], .stApp, button, input, textarea, select {
+  font-family:'Pretendard', system-ui, -apple-system, sans-serif !important;
+}
+.stApp{
+  background:
+    radial-gradient(120% 80% at 8% 0%, #FFEDE4 0%, transparent 55%),
+    radial-gradient(120% 90% at 100% 6%, #E6F2FB 0%, transparent 52%),
+    #F6F5F1;
+  background-attachment: fixed; color:var(--ink);
+}
+.block-container {padding-top: 2.2rem; max-width: 1180px;}
+.num, [data-testid="stMetricValue"], .hero h1, .bal-num {font-variant-numeric: tabular-nums;}
+
+/* KPI 메트릭 → 흰 카드 */
+div[data-testid="stMetric"]{
+  background:var(--card); border:1px solid var(--line); border-radius:16px;
+  padding:16px 18px; box-shadow:var(--shadow);
+}
+[data-testid="stMetricValue"]{font-weight:700; letter-spacing:-.02em; color:var(--ink);}
+[data-testid="stMetricLabel"]{color:var(--ink2); font-weight:600;}
+
+/* 저축률 히어로 */
+.hero {background:linear-gradient(135deg,#E2F7EE,#E4F1FA);
+       border-radius:18px; padding:24px 28px; border:1px solid #E2F7EE;
+       box-shadow:var(--shadow);}
+.hero .lab{color:var(--save); font-weight:700; font-size:.92rem;}
+.hero h1 {font-size:3.4rem; margin:.1rem 0 0; color:#2B9C6D; letter-spacing:-.03em; line-height:1;}
+.hero .sub{color:var(--ink2); font-size:.9rem; margin-top:6px;}
+
+/* 밸런스 히어로 (최우선 지표: 수입−지출=남은 돈) */
+.bal{position:relative; background:var(--card); border:1px solid var(--line);
+     border-radius:16px; padding:20px 22px 20px 26px; box-shadow:var(--shadow); overflow:hidden;}
+.bal::before{content:""; position:absolute; left:0; top:0; bottom:0; width:6px;}
+.bal.pos::before{background:var(--save);} .bal.neg::before{background:var(--expense);}
+.bal .cap{color:var(--ink2); font-weight:600; font-size:.9rem;}
+.bal .big{font-size:2.6rem; font-weight:700; letter-spacing:-.03em; line-height:1.1;}
+.bal.pos .big{color:#2B9C6D;} .bal.neg .big{color:#E06A52;}
+.bal .eq{color:var(--ink2); font-size:.92rem; margin-top:4px;}
+
+/* 인사이트 카드 */
+.insight {background:var(--card); border:1px solid var(--line); border-radius:14px;
+          padding:16px 18px; height:100%; box-shadow:var(--shadow);}
+.insight .t {font-weight:700; font-size:1.0rem; margin-bottom:6px; color:var(--ink);}
+.insight .b {color:var(--ink2); font-size:.88rem; white-space:pre-line; line-height:1.55;}
+
+/* 지출구분 태그 pill (색 점 + 라벨, 이모지 X) */
+.tag{display:inline-flex; align-items:center; gap:6px; padding:3px 10px;
+     border-radius:999px; font-size:.82rem; font-weight:600; border:1px solid var(--line);}
+.tag .dot{width:7px; height:7px; border-radius:999px;}
+
+/* 탭: 선택 시 그린 언더라인 */
+.stTabs [aria-selected="true"]{color:var(--brand) !important;}
+.stTabs [data-baseweb="tab-highlight"]{background:var(--brand) !important;}
 </style>
 """, unsafe_allow_html=True)
+
+
+def tag_html(share: str) -> str:
+    c = C.person_color(share)
+    return f'<span class="tag" style="color:{c};background:{c}14;border-color:{c}33">' \
+           f'<span class="dot" style="background:{c}"></span>{share}</span>'
 
 
 def won(x: float) -> str:
@@ -124,21 +177,26 @@ if ledger_empty:
 # ══════════════════════════════════════════════════════════════
 with tab_summary:
     label, _ = F.savings_grade(summary["저축률"])
-    c1, c2 = st.columns([1.1, 1])
+    balance = summary["합산수입"] - summary["총지출"]
+    bal_cls = "pos" if balance >= 0 else "neg"
+    c1, c2 = st.columns([1, 1.05])
     with c1:
+        # 밸런스 히어로 — 최우선 지표 (수입 − 지출 = 남은 돈)
+        st.markdown(
+            f"""<div class="bal {bal_cls}">
+            <div class="cap">{sel_month} 이번 달 밸런스</div>
+            <div class="big num">{'+' if balance>=0 else '−'}{abs(balance):,.0f}원</div>
+            <div class="eq">수입 {man(summary['합산수입'])}원 − 지출 {man(summary['총지출'])}원
+            = 남은 돈 {man(balance)}원</div>
+            </div>""", unsafe_allow_html=True)
+    with c2:
         st.markdown(
             f"""<div class="hero">
-            <div style="color:#1E40AF;font-weight:600;">{sel_month} 저축률 · {label}</div>
+            <div class="lab">{sel_month} 저축률 · {label}</div>
             <h1>{summary['저축률']*100:.0f}%</h1>
-            <div style="color:#475569;">저축액 {won(summary['저축액'])} ·
-            합산수입 {won(summary['합산수입'])}</div>
-            </div>""",
-            unsafe_allow_html=True,
-        )
-    with c2:
-        st.markdown("####  ")
-        st.progress(min(summary["저축률"] / C.SAVINGS_RATE_TARGET, 1.0))
-        st.caption(f"목표 저축률 {C.SAVINGS_RATE_TARGET:.0%} 대비 진행률")
+            <div class="sub">저축액 {won(summary['저축액'])} · 합산수입 {won(summary['합산수입'])}
+            · 목표 {C.SAVINGS_RATE_TARGET:.0%}</div>
+            </div>""", unsafe_allow_html=True)
 
     st.markdown("")
     # 핵심 지표 4종 (전월 대비 델타)
@@ -179,7 +237,7 @@ with tab_summary:
             y=alt.Y("단계:N", sort=None, title=None),
             color=alt.Color("종류:N",
                             scale=alt.Scale(domain=["수입", "지출", "저축"],
-                                            range=["#22C55E", "#F87171", "#3B82F6"]),
+                                            range=[C.COLOR["income"], C.COLOR["expense"], C.COLOR["save"]]),
                             legend=None),
             tooltip=[alt.Tooltip("값:Q", format=",.0f")],
         ).properties(height=260)
@@ -193,7 +251,7 @@ with tab_summary:
                 theta="금액:Q",
                 color=alt.Color("지출구분:N",
                                 scale=alt.Scale(domain=C.SPEND_OWNER,
-                                                range=["#3B82F6", "#F59E0B", "#10B981"])),
+                                                range=[C.person_color(o) for o in C.SPEND_OWNER])),
                 tooltip=["지출구분", alt.Tooltip("금액:Q", format=",.0f")],
             ).properties(height=260)
             st.altair_chart(donut, use_container_width=True)
@@ -216,10 +274,10 @@ with tab_summary:
     st.markdown("#### 📈 월별 추이")
     if len(trend) >= 1:
         base = alt.Chart(trend).encode(x=alt.X("연월:N", title=None))
-        income_bar = base.mark_bar(color="#BFDBFE", size=24).encode(
+        income_bar = base.mark_bar(color="#A9D2EC", size=24).encode(
             y=alt.Y("수입:Q", title="원", axis=alt.Axis(format="~s")))
-        expense_bar = base.mark_bar(color="#FECACA", size=14).encode(y="지출:Q")
-        rate_line = base.mark_line(point=True, color="#1E40AF", strokeWidth=3).encode(
+        expense_bar = base.mark_bar(color="#FFB9A8", size=14).encode(y="지출:Q")
+        rate_line = base.mark_line(point=True, color="#2B9C6D", strokeWidth=3).encode(
             y=alt.Y("저축률:Q", axis=alt.Axis(format="%", title="저축률")))
         st.altair_chart(
             alt.layer(income_bar, expense_bar).resolve_scale(y="shared")
@@ -245,7 +303,7 @@ with tab_assets:
         if not comp.empty and comp["금액"].sum() != 0:
             pie = alt.Chart(comp).mark_arc(innerRadius=60).encode(
                 theta="금액:Q",
-                color=alt.Color("자산:N", title="자산"),
+                color=alt.Color("자산:N", title="자산", scale=alt.Scale(range=C.ACCOUNT_PALETTE)),
                 tooltip=["자산", alt.Tooltip("금액:Q", format=",.0f")],
             ).properties(height=280)
             st.altair_chart(pie, use_container_width=True)
@@ -283,10 +341,10 @@ with tab_assets:
             x=alt.X("연월:N", title=None),
             y=alt.Y("금액:Q", title="원", axis=alt.Axis(format="~s"), stack=True),
             color=alt.Color("구성:N", scale=alt.Scale(
-                domain=["가계현금", "투자"], range=["#60A5FA", "#34D399"])),
+                domain=["가계현금", "투자"], range=[C.COLOR["nw_house"], C.COLOR["nw_invest"]])),
             tooltip=["연월", "구성", alt.Tooltip("금액:Q", format=",.0f")],
         ).properties(height=300)
-        line = alt.Chart(nwt).mark_line(color="#1E3A8A", strokeWidth=2, point=True).encode(
+        line = alt.Chart(nwt).mark_line(color="#2E3138", strokeWidth=2, point=True).encode(
             x="연월:N", y="순자산:Q",
             tooltip=["연월", alt.Tooltip("순자산:Q", format=",.0f")])
         st.altair_chart(area + line, use_container_width=True)
@@ -310,10 +368,10 @@ with tab_assets:
             y=alt.Y("금액:Q", title="지출(원)", axis=alt.Axis(format="~s")),
             color=alt.Color("지출유형:N", scale=alt.Scale(
                 domain=["고정비", "변동비", "용돈"],
-                range=["#6366F1", "#F59E0B", "#F472B6"])),
+                range=[C.COLOR["fixed"], C.COLOR["variable"], C.COLOR["person_공통"]])),
             tooltip=["기간", "지출유형", alt.Tooltip("금액:Q", format=",.0f")],
         )
-        inc_line = alt.Chart(ftab).mark_line(color="#16A34A", strokeWidth=3, point=True).encode(
+        inc_line = alt.Chart(ftab).mark_line(color="#3E92CF", strokeWidth=3, point=True).encode(
             x="기간:N", y="수입:Q",
             tooltip=["기간", alt.Tooltip("수입:Q", format=",.0f")])
         st.altair_chart(bar + inc_line, use_container_width=True)
@@ -411,7 +469,7 @@ with tab_ledger:
                 y=alt.Y("라벨:N", sort="-x", title=None),
                 color=alt.Color("비용성격:N",
                                 scale=alt.Scale(domain=["고정비", "변동비"],
-                                                range=["#6366F1", "#F59E0B"])),
+                                                range=[C.COLOR["fixed"], C.COLOR["variable"]])),
                 tooltip=["분류", alt.Tooltip("금액:Q", format=",.0f")],
             ).properties(height=max(260, 26 * len(cat)))
             st.altair_chart(chart, use_container_width=True)
@@ -459,7 +517,7 @@ with tab_invest:
     with pL:
         st.markdown("#### 🏷️ 종목별 순투입원금")
         if not by_ticker.empty:
-            chart = alt.Chart(by_ticker).mark_bar(cornerRadius=4, color="#10B981").encode(
+            chart = alt.Chart(by_ticker).mark_bar(cornerRadius=4, color="#3FC489").encode(
                 x=alt.X("순투입원금:Q", title="원", axis=alt.Axis(format="~s")),
                 y=alt.Y("ticker:N", sort="-x", title=None),
                 tooltip=["ticker", "account",
@@ -471,7 +529,7 @@ with tab_invest:
         if not by_account.empty:
             donut = alt.Chart(by_account).mark_arc(innerRadius=55).encode(
                 theta="순투입원금:Q",
-                color=alt.Color("account:N", title="계좌"),
+                color=alt.Color("account:N", title="계좌", scale=alt.Scale(range=C.ACCOUNT_PALETTE)),
                 tooltip=["account", alt.Tooltip("순투입원금:Q", format=",.0f")],
             ).properties(height=260)
             st.altair_chart(donut, use_container_width=True)
