@@ -1,0 +1,25 @@
+/* 실제 앱용 보강 — 디바이스 프레임 대신 풀폭 + 폰 자동 반응형 */
+.app-shell { padding: 24px 20px 56px; }
+.viewport.app { width: 100%; max-width: 1180px; margin: 0 auto; border-radius: 22px; }
+
+/* 작은 화면(실제 폰)에서 자동 축약 — 시안의 .viewport.mobile 규칙을 미디어쿼리로 */
+@media (max-width: 820px) {
+  .app-shell { padding: 12px 10px 40px; }
+  .grid-4, .grid-3, .grid-2 { grid-template-columns: 1fr 1fr !important; }
+  .with-sidebar { flex-direction: column; }
+  .sidebar { width: 100%; flex: none; flex-direction: row; overflow-x: auto;
+             border-right: none; border-bottom: 1px solid var(--line); gap: 8px; padding: 12px 16px; }
+  .sidebar .side-brand, .sidebar .side-foot { display: none; }
+  .sidebar button { white-space: nowrap; }
+  .content { padding: 16px; gap: 16px; overflow-x: hidden; }
+  .balance-hero { flex-direction: column; align-items: flex-start; padding: 20px; }
+  .balance-hero .bh-eq { flex-wrap: wrap; row-gap: 12px; }
+  .bh-num { font-size: 38px; }
+  .dash-header { flex-wrap: wrap; }
+  .dash-header .brand { flex-basis: 100%; }
+  .networth, .donut-wrap { flex-direction: column; align-items: flex-start; }
+  .table-wrap { overflow-x: auto; }
+}
+@media (max-width: 480px) {
+  .grid-4, .grid-3, .grid-2 { grid-template-columns: 1fr !important; }
+}
