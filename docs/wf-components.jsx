@@ -33,23 +33,34 @@ function Kpi({ label, icon, tone, value, unit, delta, accent, hero }) {
   );
 }
 
-/* ---------- 이번 달 밸런스 히어로 (최우선 지표) ---------- */
-function BalanceHero({ income, expense }) {
-  const bal = income - expense;
-  const neg = bal < 0;
+/* ---------- 이번 달 현금 흐름 / 런웨이 (최우선 지표) ---------- */
+function BalanceHero({ cash }) {
+  const c = cash || { income: 0, expense: 0, invested: 0, remainCash: 0, remainFixed: 0, afterFixed: 0, hasPrev: false };
+  const neg = c.remainCash < 0;
+  const afterNeg = c.afterFixed < 0;
   return (
     <div className={`balance-hero ${neg ? 'is-neg' : ''}`}>
       <div className="bh-main">
-        <div className="bh-tag"><Icon name="scale" size={17} style={{ color: 'var(--ink-3)' }} />이번 달 수입 − 지출 밸런스</div>
-        <div className={`bh-num ${neg ? 'neg' : ''}`}>{neg ? '−' : '+'}{KRW(Math.abs(bal))}</div>
+        <div className="bh-tag"><Icon name="scale" size={17} style={{ color: 'var(--ink-3)' }} />이번 달 잔여 현금 · 실제 나간 돈 기준</div>
+        <div className={`bh-num ${neg ? 'neg' : ''}`}>{neg ? '−' : '+'}{KRW(Math.abs(c.remainCash))}</div>
       </div>
       <div className="bh-eq">
-        <div className="eq-item income"><span>합산 수입</span><span className="v">{KRW(income)}</span></div>
+        <div className="eq-item income"><span>합산 수입</span><span className="v">{KRW(c.income)}</span></div>
         <span className="eq-op">−</span>
-        <div className="eq-item expense"><span>총 지출</span><span className="v">{KRW(expense)}</span></div>
+        <div className="eq-item expense"><span>지출</span><span className="v">{KRW(c.expense)}</span></div>
+        <span className="eq-op">−</span>
+        <div className="eq-item" style={{ color: 'var(--nw-invest)' }}><span>투자</span><span className="v">{KRW(c.invested)}</span></div>
         <span className="eq-op">=</span>
-        <div className="eq-item"><span>남은 돈</span><span className="v">{KRW(bal)}</span></div>
+        <div className="eq-item"><span>잔여 현금</span><span className="v">{KRW(c.remainCash)}</span></div>
       </div>
+      {c.hasPrev && c.remainFixed > 0 && (
+        <div style={{ flexBasis: '100%', marginTop: 14, paddingTop: 14, borderTop: '1px solid var(--line)', display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap', fontSize: 13.5 }}>
+          <span style={{ color: 'var(--ink-2)' }}>아직 안 나간 고정비(예상) <b style={{ color: 'var(--fixed-c)' }}>{KRW(c.remainFixed)}</b></span>
+          <span className="eq-op">→</span>
+          <span style={{ color: 'var(--ink-2)' }}>다 나가면 예상 잔여 <b style={{ color: afterNeg ? 'var(--expense)' : 'var(--save)' }}>{afterNeg ? '−' : '+'}{KRW(Math.abs(c.afterFixed))}</b> {afterNeg ? '⚠️ 부족 주의' : '🟢 여유'}</span>
+          <span style={{ color: 'var(--ink-3)', fontSize: 11.5 }}>· 지난달 고정비 기준 추정</span>
+        </div>
+      )}
     </div>
   );
 }

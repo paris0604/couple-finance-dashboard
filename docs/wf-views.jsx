@@ -16,16 +16,16 @@ function SummaryView({ excludeWedding, setExcludeWedding, comp, setComp }) {
       <div className="grid grid-4">
         <Kpi label="합산 수입" icon="wallet" tone="blue" value={KRW(WF.income.total)} accent="income" delta="지영 + 승화 + 상여" />
         <Kpi label="총 지출" icon="receipt" tone="rose" value={KRW(expense)} accent="expense" delta={excludeWedding ? '웨딩 제외' : '웨딩 포함'} />
-        <Kpi label="잔여 현금" icon="coins" tone="mint" value={KRW(saving)} accent="save" delta="수입 − 지출 · 저축·투자 여력" />
+        <Kpi label="투자납입" icon="coins" tone="yellow" value={KRW((WF.cash || {}).invested || 0)} delta="이번 달 실제 투자" />
         <Kpi label="저축여력률" icon="trending" value={rate + '%'} accent="save" hero delta="잔여 ÷ 수입" />
       </div>
 
       <div className="table-toolbar" style={{ justifyContent: 'space-between' }}>
-        <span className="chart-note">※ ‘잔여 현금’은 아직 안 쓴 돈이에요. 저축·투자로 옮겨야 자산이 됩니다 (실제 투자납입은 투자 탭).</span>
+        <span className="chart-note">※ 아래 ‘잔여 현금’은 수입 − 지출 − 투자. 아직 안 나간 고정비를 빼면 실제 여유가 보여요.</span>
         <Toggle on={excludeWedding} onChange={setExcludeWedding}>웨딩 지출 제외하고 보기</Toggle>
       </div>
 
-      <BalanceHero income={WF.income.total} expense={expense} />
+      <BalanceHero cash={WF.cash} />
 
       <div className="card networth">
         <div className="nw-main">

@@ -187,12 +187,34 @@ function buildWF(month) {
     byStrategy: toArr(stratAgg),
     holdings: Object.keys(holdAgg).map(function (k) { return holdAgg[k]; }).filter(function (h) { return h.principal > 0; }).sort(function (a, b) { return b.principal - a.principal; }),
   };
+  // 현금 흐름 / 런웨이 — 수입 − 실제지출 − 이번달 투자 = 잔여 현금,
+  // 그리고 '아직 안 나간 고정비(지난달 기준)'를 빼면 월말 예상 잔여
+  var monthInvested = 0;
+  I.forEach(function (r) { if (r._ym === month) monthInvested += r._val; });
+  if (monthInvested < 0) monthInvested = 0;
+  var mi = months.indexOf(month);
+  var prevMonth = (mi >= 0 && mi + 1 < months.length) ? months[mi + 1] : null;
+  var expectedFixed = fixed;
+  if (prevMonth) {
+    var pexp = L.filter(function (r) { return r._ym === prevMonth && r['구분'] === '지출'; });
+    expectedFixed = sum(pexp.filter(function (r) { return FIXED.indexOf(r['분류']) >= 0; }));
+  }
+  var paidFixed = fixed;
+  var remainFixed = Math.max(expectedFixed - paidFixed, 0);
+  var realExpense = totalWith;
+  var remainCash = incomeTotal - realExpense - monthInvested;
+  var cash = {
+    income: incomeTotal, expense: realExpense, invested: monthInvested,
+    remainCash: remainCash, expectedFixed: expectedFixed, paidFixed: paidFixed,
+    remainFixed: remainFixed, afterFixed: remainCash - remainFixed, hasPrev: !!prevMonth,
+  };
 
   var wf = {
     month: month.slice(0, 4) + '년 ' + parseInt(month.slice(5), 10) + '월',
     income: { total: incomeTotal, items: incomeItems },
     expense: { totalWithWedding: totalWith, totalNoWedding: totalNo, byShare: byShare, fixed: fixed, variable: variable, byCategory: byCategory },
     kpi: { incomeSum: incomeTotal, expenseSum: expenseKpi, savingInvest: saving, savingRate: savingRate, savingRateWithWedding: savingRateW },
+    cash: cash,
     networth: networth,
     trend: trend,
     ledgerStrip: { fixed: fixed, variable: variable, allowanceJ: allowJ, allowanceS: allowS },
