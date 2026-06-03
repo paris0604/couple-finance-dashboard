@@ -17,6 +17,7 @@ const VIEWS = [
   { id: 'summary', icon: 'pie', label: '공통 요약' },
   { id: 'ledger', icon: 'receipt', label: '가계부' },
   { id: 'invest', icon: 'trending', label: '투자' },
+  { id: 'loan', icon: 'bank', label: '대출' },
 ];
 
 /* ---------- API ---------- */
@@ -171,7 +172,8 @@ function Dashboard() {
     if (!loaded || !window.WF) return <div className="card" style={{ color: 'var(--ink-2)' }}>불러오는 중…</div>;
     if (view === 'summary') return <SummaryView {...tw} />;
     if (view === 'ledger') return <LedgerView filter={filter} setFilter={setFilter} />;
-    return <InvestView />;
+    if (view === 'invest') return <InvestView />;
+    return <LoanView />;
   }
 
   return (

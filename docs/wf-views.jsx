@@ -153,4 +153,80 @@ function InvestView() {
   );
 }
 
-Object.assign(window, { SummaryView, LedgerView, InvestView });
+/* ============== 🏦 대출 ============== */
+function LoanView() {
+  const L = WF.loans || { loans: [], totalBalance: 0, totalMonthly: 0, avgRate: 0, schedule: [] };
+  const R = { textAlign: 'right' };
+  if (!L.loans.length) {
+    return (
+      <div className="card" style={{ color: 'var(--ink-2)', lineHeight: 1.7 }}>
+        🏦 아직 등록된 대출이 없어요. 구글시트의 <b style={{ color: 'var(--ink)' }}>‘대출’ 탭</b>에 입력하면 현황·상환계획이 자동으로 표시됩니다.
+        <div className="chart-note" style={{ marginTop: 10 }}>
+          열 구성: 대출명 · 대출기관 · 대출금액 · 연이자율(%) · 대출기간(개월) · 시작일(YYYY-MM-DD) · 납부일 · 상환방식(원리금균등/원금균등/만기일시) · 메모
+        </div>
+      </div>
+    );
+  }
+  return (
+    <React.Fragment>
+      <div className="grid grid-3">
+        <Kpi label="총 대출잔액" icon="bank" tone="rose" value={KRW(L.totalBalance)} accent="expense" delta="현재 남은 원금 합계" />
+        <Kpi label="월 상환액 합계" icon="receipt" tone="purple" value={KRW(L.totalMonthly)} delta="이번 달 기준" />
+        <Kpi label="평균 이자율" icon="trending" tone="yellow" value={L.avgRate + '%'} delta="잔액 가중평균" />
+      </div>
+
+      <div className="card wide">
+        <SectionTitle icon="bank">대출 현황</SectionTitle>
+        <div className="table-wrap" style={{ marginTop: 8 }}>
+          <table className="txn">
+            <thead><tr>
+              <th>대출명</th><th>기관</th><th style={R}>잔액</th><th style={R}>이자율</th>
+              <th style={R}>남은기간</th><th>납부일</th><th style={R}>월 상환액</th><th>상환방식</th>
+            </tr></thead>
+            <tbody>
+              {L.loans.map((ln, i) => (
+                <tr key={i}>
+                  <td><span className="cat"><IconChip name="bank" tone="blue" size={26} /><strong>{ln.name}</strong></span></td>
+                  <td>{ln.lender || '-'}</td>
+                  <td className="amt out">{WON(ln.balance)}</td>
+                  <td style={R}>{ln.rate}%</td>
+                  <td style={R}>{ln.remainMonths}개월</td>
+                  <td>{ln.payDay ? '매월 ' + ln.payDay + '일' : '-'}</td>
+                  <td className="amt"><strong>{WON(ln.monthly)}</strong></td>
+                  <td><span className="kind-tag expense" style={{ background: 'var(--gray-bg)', color: 'var(--ink-2)' }}>{ln.method}</span></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="card wide">
+        <div className="table-toolbar" style={{ justifyContent: 'space-between' }}>
+          <SectionTitle icon="list">향후 12개월 상환 계획</SectionTitle>
+          <span className="chart-note">전체 대출 합산 · 원금/이자 분해</span>
+        </div>
+        <div className="table-wrap" style={{ marginTop: 8 }}>
+          <table className="txn">
+            <thead><tr>
+              <th>월</th><th style={R}>원금</th><th style={R}>이자</th><th style={R}>상환액</th><th style={R}>남은 잔액</th>
+            </tr></thead>
+            <tbody>
+              {L.schedule.map((s, i) => (
+                <tr key={i}>
+                  <td className="t-date">{s.label}</td>
+                  <td className="amt">{WON(s.원금)}</td>
+                  <td className="amt" style={{ color: 'var(--expense)' }}>{WON(s.이자)}</td>
+                  <td className="amt"><strong>{WON(s.상환액)}</strong></td>
+                  <td className="amt">{WON(s.잔액)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </React.Fragment>
+  );
+}
+
+Object.assign(window, { SummaryView, LedgerView, InvestView, LoanView });
