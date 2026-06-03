@@ -23,6 +23,15 @@ select.modal-input { appearance: none; -webkit-appearance: none; cursor: pointer
 .modal-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
 @media (max-width: 480px) { .modal-grid { grid-template-columns: 1fr; } }
 
+/* ── 대출 카드 + 상환율 진행바 ── */
+.loan-card { border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px;
+  background: var(--card); box-shadow: var(--shadow-sm); }
+.loan-prog { height: 10px; border-radius: 999px; background: var(--paper-2); overflow: hidden; margin: 12px 0 8px; }
+.loan-prog > span { display: block; height: 100%; border-radius: 999px;
+  background: linear-gradient(90deg, var(--brand), var(--mint)); transition: width .4s ease; }
+.loan-meta { display: flex; flex-wrap: wrap; gap: 7px 16px; font-size: 12.5px; color: var(--ink-2); margin-top: 10px; }
+.loan-meta b { color: var(--ink); font-weight: 700; }
+
 /* ── 거래 구분(수입/지출) 컬러 태그 ── */
 .kind-tag { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 999px;
   font-size: 12px; font-weight: 700; letter-spacing: -.01em; }

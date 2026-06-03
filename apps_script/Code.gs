@@ -267,11 +267,18 @@ function buildLoans(today) {
     var remain = sched.slice(elapsed);
     var curBal = (elapsed > 0) ? sched[elapsed - 1].잔액 : P;
     var monthly = remain.length ? remain[0].상환액 : 0;
+    // 상환율 + 기간(시작~만기)
+    var startStr = ymd(r['시작일']);
+    var sm = startStr.match(/(\d{4})-(\d{2})/);
+    var startDisp = sm ? sm[1] + '.' + sm[2] : '';
+    var endDisp = '';
+    if (sm) { var tot = (+sm[1]) * 12 + (+sm[2] - 1) + n; endDisp = Math.floor(tot / 12) + '.' + ('0' + (tot % 12 + 1)).slice(-2); }
+    var paidRatio = P > 0 ? Math.round((P - curBal) / P * 1000) / 10 : 0;
     loans.push({
       name: r['대출명'] || '대출', lender: r['대출기관'] || '', principal: P,
-      balance: Math.round(curBal), rate: rate, term: n,
+      balance: Math.round(curBal), rate: rate, term: n, elapsed: elapsed,
       remainMonths: Math.max(n - elapsed, 0), payDay: r['납부일'] || '', method: method,
-      monthly: Math.round(monthly),
+      monthly: Math.round(monthly), paidRatio: paidRatio, start: startDisp, end: endDisp,
       totalInterestRemain: Math.round(remain.reduce(function (s, x) { return s + x.이자; }, 0)),
       memo: r['메모'] || '',
     });

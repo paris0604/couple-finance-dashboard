@@ -176,28 +176,37 @@ function LoanView() {
       </div>
 
       <div className="card wide">
-        <SectionTitle icon="bank">대출 현황</SectionTitle>
-        <div className="table-wrap" style={{ marginTop: 8 }}>
-          <table className="txn">
-            <thead><tr>
-              <th>대출명</th><th>기관</th><th style={R}>잔액</th><th style={R}>이자율</th>
-              <th style={R}>남은기간</th><th>납부일</th><th style={R}>월 상환액</th><th>상환방식</th>
-            </tr></thead>
-            <tbody>
-              {L.loans.map((ln, i) => (
-                <tr key={i}>
-                  <td><span className="cat"><IconChip name="bank" tone="blue" size={26} /><strong>{ln.name}</strong></span></td>
-                  <td>{ln.lender || '-'}</td>
-                  <td className="amt out">{WON(ln.balance)}</td>
-                  <td style={R}>{ln.rate}%</td>
-                  <td style={R}>{ln.remainMonths}개월</td>
-                  <td>{ln.payDay ? '매월 ' + ln.payDay + '일' : '-'}</td>
-                  <td className="amt"><strong>{WON(ln.monthly)}</strong></td>
-                  <td><span className="kind-tag expense" style={{ background: 'var(--gray-bg)', color: 'var(--ink-2)' }}>{ln.method}</span></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <SectionTitle icon="bank">대출 현황 · 상환율</SectionTitle>
+        <div className="grid grid-2" style={{ marginTop: 12, alignItems: 'start' }}>
+          {L.loans.map((ln, i) => (
+            <div className="loan-card" key={i}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
+                <div className="card-label" style={{ margin: 0 }}>
+                  <IconChip name="bank" tone="blue" size={30} />
+                  <div>
+                    <div style={{ fontWeight: 700 }}>{ln.name}</div>
+                    <div style={{ fontSize: 12, color: 'var(--ink-3)' }}>{ln.lender || '-'}</div>
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div className="num" style={{ fontWeight: 700, fontSize: 17, color: 'var(--expense)' }}>{WON(ln.balance)}</div>
+                  <div style={{ fontSize: 11.5, color: 'var(--ink-3)' }}>/ {WON(ln.principal)}</div>
+                </div>
+              </div>
+              <div className="loan-prog"><span style={{ width: Math.min(ln.paidRatio, 100) + '%' }}></span></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5 }}>
+                <span style={{ color: 'var(--brand)', fontWeight: 700 }}>상환율 {ln.paidRatio}%</span>
+                <span style={{ color: 'var(--ink-3)' }}>경과 {ln.elapsed}/{ln.term}개월 · 남은 {ln.remainMonths}개월</span>
+              </div>
+              <div className="loan-meta">
+                <span>📅 {ln.start} ~ {ln.end}</span>
+                <span>이자율 <b>{ln.rate}%</b></span>
+                <span>월 상환 <b>{WON(ln.monthly)}</b></span>
+                <span>납부일 <b>{ln.payDay ? '매월 ' + ln.payDay + '일' : '-'}</b></span>
+                <span className="kind-tag" style={{ background: 'var(--gray-bg)', color: 'var(--ink-2)' }}>{ln.method}</span>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
