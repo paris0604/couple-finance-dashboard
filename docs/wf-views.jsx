@@ -108,7 +108,7 @@ function LedgerView({ filter, setFilter }) {
       <div className="card wide">
         <div className="table-toolbar" style={{ justifyContent: 'space-between' }}>
           <SectionTitle icon="receipt">거래 내역</SectionTitle>
-          <span className="search"><Icon name="search" size={15} style={{ color: 'var(--ink-3)' }} /><input placeholder="메모·분류 검색" /></span>
+          <span className="chart-note">✏️ 행을 클릭하면 수정·삭제</span>
         </div>
         <TxnTable txns={txns} />
       </div>
