@@ -158,14 +158,16 @@ function buildWF(month) {
   var allowJ = sum(exp.filter(function (r) { return r['분류'] === ALLOWANCE && r['지출구분'] === '지영'; }));
   var allowS = sum(exp.filter(function (r) { return r['분류'] === ALLOWANCE && r['지출구분'] === '승화'; }));
 
-  // txns (최신순)
+  // txns (최신순) — 수정 팝업용으로 id·전체날짜·지출구분(한글) 포함
   var txns = mRows.slice().sort(function (a, b) { return a._date < b._date ? 1 : -1; }).map(function (r) {
     var isInc = r['구분'] === '수입';
     return {
+      id: r['거래ID'], fullDate: r._date,
       date: r._date.slice(5).replace('-', '.'), kind: r['구분'], cat: r['분류'],
       emoji: EMOJI[r['분류']] || (isInc ? '💰' : '📦'),
       amount: isInc ? r._amt : -r._amt,
-      share: SHARE_OF[r['지출구분']] || 'common', pay: r['결제수단'] || '', memo: r['메모'] || '',
+      share: SHARE_OF[r['지출구분']] || 'common', owner: r['지출구분'] || '공통',
+      pay: r['결제수단'] || '', memo: r['메모'] || '',
     };
   });
 
@@ -228,14 +230,41 @@ function doGet(e) {
   }
 }
 
+function findRowById(sh, id) {
+  var last = sh.getLastRow();
+  if (last < 2) return -1;
+  var ids = sh.getRange(1, 1, last, 1).getValues();
+  for (var i = 1; i < ids.length; i++) if (String(ids[i][0]) === String(id)) return i + 1; // 1-based
+  return -1;
+}
+
 function doPost(e) {
   try {
     var body = JSON.parse(e.postData.contents || '{}');
-    var rows = body.rows || [];
     var sh = SpreadsheetApp.openById(CONFIG.LEDGER_ID).getSheetByName(CONFIG.LEDGER_TAB);
     if (!sh) return json({ ok: false, error: '가계부 탭을 찾을 수 없습니다' });
+
+    // 수정
+    if (body.action === 'update') {
+      var r = body.row || {};
+      var rowNum = findRowById(sh, r.id);
+      if (rowNum < 0) return json({ ok: false, error: '거래를 찾을 수 없습니다' });
+      sh.getRange(rowNum, 1, 1, 8).setValues([[
+        r.id, r.date, r.kind, r.cat, Math.abs(num(r.amount)),
+        r.owner || '공통', r.pay || '', r.memo || '',
+      ]]);
+      return json({ ok: true, updated: 1 });
+    }
+    // 삭제
+    if (body.action === 'delete') {
+      var rn = findRowById(sh, body.id);
+      if (rn < 0) return json({ ok: false, error: '거래를 찾을 수 없습니다' });
+      sh.deleteRow(rn);
+      return json({ ok: true, deleted: 1 });
+    }
+    // 추가 (기본)
     var added = 0;
-    rows.forEach(function (r) {
+    (body.rows || []).forEach(function (r) {
       var id = 'TX' + new Date().getTime() + Math.floor(Math.random() * 1000);
       sh.appendRow([id, r.date, r.kind, r.cat, Math.abs(num(r.amount)), r.owner || '공통', r.pay || '', r.memo || '']);
       added++;

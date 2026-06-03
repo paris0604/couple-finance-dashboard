@@ -252,7 +252,9 @@ function TxnTable({ txns }) {
         <tbody>
           {txns.map((t, i) => {
             return (
-              <tr key={i}>
+              <tr key={i} onClick={() => window.openEdit && window.openEdit(t)}
+                  style={{ cursor: 'pointer' }} title="클릭하면 수정/삭제">
+
                 <td className="t-date">{t.date}</td>
                 <td>{t.kind}</td>
                 <td><span className="cat"><span className="cat-emoji">{t.emoji}</span>{t.cat}</span></td>

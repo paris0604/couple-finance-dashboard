@@ -26,18 +26,28 @@ async function fetchWF(month) {
   if (!r.ok) throw new Error('HTTP ' + r.status);
   return r.json();
 }
-async function postEntries(rows) {
+async function apiPost(body) {
   // text/plain 으로 보내 CORS preflight 회피 (Apps Script 표준 패턴)
   const r = await fetch(API, {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify({ rows }),
+    body: JSON.stringify(body),
   });
   const j = await r.json().catch(() => ({}));
   if (!r.ok || j.ok === false) throw new Error(j.error || ('HTTP ' + r.status));
   return j;
 }
+async function postEntries(rows) { return apiPost({ rows }); }
 window.postEntries = postEntries;
+window.apiPost = apiPost;
+
+// 수정 팝업 드롭다운용 상수
+const EXPENSE_CATS = ['주거', '통신', '보험', '구독', '교통(정액)', '대출원금상환',
+  '식비-장보기', '식비-외식', '식비-카페', '생활용품', '교통(비정기)', '의료',
+  '문화·여가', '의류·미용', '웨딩', '경조사', '기타', '용돈'];
+const INCOME_CATS = ['지영 급여', '승화 급여', '상여·보너스', '기타수입'];
+const OWNERS = ['공통', '지영', '승화'];
+const PAYS = ['', '체크카드', '신용카드', '계좌이체'];
 
 /* ---------- 셸 ---------- */
 function BrandMark() { return <span className="brand-mark"><Icon name="home" size={17} stroke={2} /></span>; }
@@ -65,6 +75,72 @@ function HeaderActions() {
   );
 }
 
+/* ---------- 거래 수정/삭제 팝업 ---------- */
+function EditModal({ txn, onClose }) {
+  const [kind, setKind] = React.useState(txn.kind);
+  const [cat, setCat] = React.useState(txn.cat);
+  const [date, setDate] = React.useState(txn.fullDate);
+  const [amount, setAmount] = React.useState(Math.abs(txn.amount));
+  const [owner, setOwner] = React.useState(txn.owner || '공통');
+  const [pay, setPay] = React.useState(txn.pay || '');
+  const [memo, setMemo] = React.useState(txn.memo || '');
+  const [busy, setBusy] = React.useState(false);
+  const cats = kind === '수입' ? INCOME_CATS : EXPENSE_CATS;
+  const inS = { width: '100%', padding: '9px 11px', border: '1px solid var(--line)', borderRadius: 10, font: 'inherit', background: 'var(--paper-2)', color: 'var(--ink)' };
+  const Field = ({ label, children }) => (
+    <label style={{ display: 'block', marginBottom: 12 }}>
+      <div style={{ fontSize: 12, color: 'var(--ink-2)', marginBottom: 5, fontWeight: 600 }}>{label}</div>
+      {children}
+    </label>
+  );
+
+  async function save() {
+    if (!amount || amount <= 0) { alert('금액을 확인해 주세요.'); return; }
+    setBusy(true);
+    try {
+      await apiPost({ action: 'update', row: { id: txn.id, date, kind, cat, amount: Number(amount), owner, pay, memo } });
+      onClose(true);
+    } catch (e) { alert('저장 실패: ' + e.message); setBusy(false); }
+  }
+  async function del() {
+    if (!window.confirm('이 거래를 삭제할까요?')) return;
+    setBusy(true);
+    try { await apiPost({ action: 'delete', id: txn.id }); onClose(true); }
+    catch (e) { alert('삭제 실패: ' + e.message); setBusy(false); }
+  }
+
+  return (
+    <div onClick={() => onClose(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(20,24,35,.38)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 16 }}>
+      <div onClick={(e) => e.stopPropagation()} className="card" style={{ width: 440, maxWidth: '94vw', maxHeight: '90vh', overflow: 'auto' }}>
+        <div className="table-toolbar" style={{ justifyContent: 'space-between', marginBottom: 14 }}>
+          <SectionTitle icon="receipt">거래 수정</SectionTitle>
+          <button className="btn ghost sm" onClick={() => onClose(false)}><Icon name="x" size={15} /></button>
+        </div>
+        <div className="grid grid-2" style={{ gap: 12 }}>
+          <Field label="날짜"><input type="date" value={date} onChange={(e) => setDate(e.target.value)} style={inS} /></Field>
+          <Field label="구분">
+            <select value={kind} onChange={(e) => { const k = e.target.value; setKind(k); const list = k === '수입' ? INCOME_CATS : EXPENSE_CATS; if (!list.includes(cat)) setCat(list[0]); }} style={inS}>
+              <option>지출</option><option>수입</option>
+            </select>
+          </Field>
+          <Field label="분류"><select value={cat} onChange={(e) => setCat(e.target.value)} style={inS}>{cats.map(c => <option key={c} value={c}>{c}</option>)}</select></Field>
+          <Field label="금액(원)"><input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} style={inS} /></Field>
+          <Field label="지출구분"><select value={owner} onChange={(e) => setOwner(e.target.value)} style={inS}>{OWNERS.map(o => <option key={o} value={o}>{o}</option>)}</select></Field>
+          <Field label="결제수단"><select value={pay} onChange={(e) => setPay(e.target.value)} style={inS}>{PAYS.map(p => <option key={p} value={p}>{p || '-'}</option>)}</select></Field>
+        </div>
+        <Field label="메모"><input value={memo} onChange={(e) => setMemo(e.target.value)} style={inS} /></Field>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 16 }}>
+          <button className="btn ghost sm" onClick={del} disabled={busy} style={{ color: 'var(--expense)' }}><Icon name="x" size={15} />삭제</button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button className="btn ghost sm" onClick={() => onClose(false)} disabled={busy}>취소</button>
+            <button className="btn" onClick={save} disabled={busy}><Icon name="check" size={15} stroke={2.2} />{busy ? '저장중…' : '저장'}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Dashboard() {
   const [months, setMonths] = React.useState([]);
   const [month, setMonth] = React.useState('');
@@ -74,6 +150,8 @@ function Dashboard() {
   const [excludeWedding, setExcludeWedding] = React.useState(true);
   const [comp, setComp] = React.useState('donut');
   const [filter, setFilter] = React.useState('all');
+  const [editTxn, setEditTxn] = React.useState(null);
+  window.openEdit = (t) => setEditTxn(t);
 
   async function load(m) {
     setErr(null);
@@ -113,6 +191,7 @@ function Dashboard() {
         ))}
       </div>
       <div className="content"><Body /></div>
+      {editTxn && <EditModal txn={editTxn} onClose={(changed) => { setEditTxn(null); if (changed) load(month); }} />}
     </div>
   );
 }
