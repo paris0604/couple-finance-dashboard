@@ -90,20 +90,28 @@ with st.sidebar:
         for name, err in dl.LAST_ERRORS.items():
             st.caption(f"⚠️ {name} 연결 실패 → 샘플 표시\n\n`{err}`")
 
+    st.divider()
+    exclude_wedding = st.toggle(
+        "💍 웨딩 지출 제외하고 보기", value=True,
+        help="결혼 준비비는 일시적 대형 지출이라 평상시 저축률을 왜곡합니다. "
+             "제외하면 '진짜 생활 저축률'을 봅니다. (순자산에는 영향 없음)")
     st.caption("저축률 = (예적금 + 투자납입) ÷ 합산수입")
 
 
-summary = F.monthly_summary(ledger, sel_month, invest_mmap.get(sel_month, 0.0))
+# 웨딩 제외 토글 — 흐름(저축률·지출·추이)에만 적용, 순자산(실제 잔액)은 전체 사용
+flow_ledger = ledger[ledger["분류"] != "웨딩"] if exclude_wedding else ledger
+
+summary = F.monthly_summary(flow_ledger, sel_month, invest_mmap.get(sel_month, 0.0))
 prev_summary = (
-    F.monthly_summary(ledger, prev_month, invest_mmap.get(prev_month, 0.0))
+    F.monthly_summary(flow_ledger, prev_month, invest_mmap.get(prev_month, 0.0))
     if prev_month else None
 )
-net = F.net_worth(ledger, invest, upto_ym=sel_month)
-trend = F.monthly_trend(ledger, invest_mmap)
+net = F.net_worth(ledger, invest, upto_ym=sel_month)   # 순자산은 항상 실제 전체
+trend = F.monthly_trend(flow_ledger, invest_mmap)
 avg_expense = float(trend["지출"].mean()) if not trend.empty else summary["총지출"]
 
 tab_summary, tab_assets, tab_ledger, tab_invest = st.tabs(
-    ["🏠 공통 요약", "📊 자산현황", "📒 가계부", "📈 투자"]
+    ["📊 공통 요약", "💎 자산현황", "📒 가계부", "📈 투자"]
 )
 
 if ledger_empty:
@@ -139,15 +147,17 @@ with tab_summary:
             return None
         return summary[key] - prev_summary[key]
 
+    if exclude_wedding and (ledger["분류"] == "웨딩").any():
+        st.caption("💍 웨딩 지출을 제외한 '생활 기준' 숫자입니다. (사이드바에서 끄면 포함)")
     m1, m2, m3, m4 = st.columns(4)
     m1.metric("💰 합산수입", man(summary["합산수입"]) + "원",
               delta=man(delta("합산수입")) + "원" if prev_summary else None)
-    m2.metric("💸 총지출", man(summary["총지출"]) + "원",
+    m2.metric("💳 총지출", man(summary["총지출"]) + "원",
               delta=man(delta("총지출")) + "원" if prev_summary else None,
               delta_color="inverse")
-    m3.metric("🐖 저축액", man(summary["저축액"]) + "원",
+    m3.metric("💵 저축액", man(summary["저축액"]) + "원",
               delta=man(delta("저축액")) + "원" if prev_summary else None)
-    m4.metric("🏦 순자산", man(net["순자산"]) + "원",
+    m4.metric("💎 순자산", man(net["순자산"]) + "원",
               help=f"가계잔액 {won(net['가계잔액'])} + 투자 순투입원금 {won(net['투자순투입원금'])}")
 
     st.divider()
@@ -390,7 +400,9 @@ with tab_ledger:
     bL, bR = st.columns([1.2, 1])
     with bL:
         st.markdown("#### 🍱 카테고리별 지출")
-        cat = F.category_breakdown(ledger, sel_month)
+        owner_filter = st.radio("자금 흐름 필터", ["전체"] + C.SPEND_OWNER,
+                                horizontal=True, label_visibility="collapsed")
+        cat = F.category_breakdown(ledger, sel_month, owner=owner_filter)
         cat = cat[cat["분류"] != C.ALLOWANCE_CATEGORY]
         if not cat.empty:
             cat["라벨"] = cat["분류"].map(lambda c: f"{C.CATEGORY_EMOJI.get(c,'•')} {c}")

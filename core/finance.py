@@ -93,9 +93,11 @@ def monthly_summary(ledger: pd.DataFrame, ym: str, invest_invested: float = 0.0)
     }
 
 
-def category_breakdown(ledger: pd.DataFrame, ym: str) -> pd.DataFrame:
+def category_breakdown(ledger: pd.DataFrame, ym: str, owner: str | None = None) -> pd.DataFrame:
     m = month_slice(ledger, ym)
     exp = m[m["구분"] == C.GUBUN_EXPENSE]
+    if owner and owner != "전체":
+        exp = exp[exp["지출구분"] == owner]
     if exp.empty:
         return pd.DataFrame(columns=["분류", "금액", "비용성격"])
     g = (
