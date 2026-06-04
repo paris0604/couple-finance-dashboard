@@ -16,9 +16,11 @@ const API = window.API_URL || '';
 const VIEWS = [
   { id: 'summary', icon: 'pie', label: '공통 요약' },
   { id: 'ledger', icon: 'receipt', label: '가계부' },
-  { id: 'monthly', icon: 'calendar', label: '월별' },
+  { id: 'monthly', icon: 'list', label: '월별' },
   { id: 'invest', icon: 'trending', label: '투자' },
   { id: 'loan', icon: 'bank', label: '대출' },
+  { id: 'calendar', icon: 'calendar', label: '캘린더' },
+  { id: 'goal', icon: 'target', label: '목표' },
 ];
 
 /* ---------- API ---------- */
@@ -180,7 +182,9 @@ function Dashboard() {
     if (view === 'ledger') return <LedgerView filter={filter} setFilter={setFilter} />;
     if (view === 'monthly') return <MonthlyView />;
     if (view === 'invest') return <InvestView />;
-    return <LoanView />;
+    if (view === 'loan') return <LoanView />;
+    if (view === 'calendar') return <CalendarView />;
+    return <GoalView />;
   }
 
   return (

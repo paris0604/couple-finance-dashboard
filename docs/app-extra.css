@@ -32,6 +32,22 @@ select.modal-input { appearance: none; -webkit-appearance: none; cursor: pointer
 .loan-meta { display: flex; flex-wrap: wrap; gap: 7px 16px; font-size: 12.5px; color: var(--ink-2); margin-top: 10px; }
 .loan-meta b { color: var(--ink); font-weight: 700; }
 
+/* ── 납부 캘린더 ── */
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-top: 10px; }
+.cal-dow { text-align: center; font-size: 12px; font-weight: 700; color: var(--ink-2); padding: 4px 0; }
+.cal-dow:first-child { color: var(--expense); }
+.cal-cell { min-height: 78px; border: 1px solid var(--line); border-radius: 10px; padding: 6px; background: var(--card); }
+.cal-cell.empty { border: none; background: transparent; }
+.cal-cell.has { border-color: var(--brand-bg); background: var(--brand-bg); }
+.cal-day { font-size: 12px; font-weight: 700; color: var(--ink-2); margin-bottom: 4px; }
+.cal-item { font-size: 10.5px; line-height: 1.35; color: var(--ink); display: flex; flex-direction: column; margin-bottom: 3px; }
+.cal-item .cal-amt { color: var(--expense); font-weight: 700; font-variant-numeric: tabular-nums; }
+@media (max-width: 640px) { .cal-cell { min-height: 56px; padding: 4px; } .cal-item { font-size: 9px; } }
+
+/* ── 목표 진행률 ── */
+.goal-prog { height: 12px; border-radius: 999px; background: var(--paper-2); overflow: hidden; margin: 10px 0; }
+.goal-prog > span { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--blue), var(--mint)); transition: width .4s ease; }
+
 /* ── 거래 구분(수입/지출) 컬러 태그 ── */
 .kind-tag { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 999px;
   font-size: 12px; font-weight: 700; letter-spacing: -.01em; }

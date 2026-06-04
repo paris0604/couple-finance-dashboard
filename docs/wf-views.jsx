@@ -300,7 +300,7 @@ function MonthlyView() {
 
 /* 대출 추가 폼 (항목별 입력 → 시트 동기화) */
 function LoanForm() {
-  const blank = { name: '', lender: '', amount: '', rate: '', term: '', start: '', payDay: '', method: '원리금균등', memo: '' };
+  const blank = { name: '', lender: '', amount: '', curBalance: '', rate: '', term: '', start: '', payDay: '', method: '원리금균등', memo: '' };
   const [f, setF] = React.useState(blank);
   const [busy, setBusy] = React.useState(false);
   const set = (k) => (e) => setF(prev => ({ ...prev, [k]: e.target.value }));
@@ -321,6 +321,7 @@ function LoanForm() {
         <label className="fld"><span>대출명 *</span><input className="modal-input" value={f.name} onChange={set('name')} placeholder="전세자금대출" /></label>
         <label className="fld"><span>대출기관</span><input className="modal-input" value={f.lender} onChange={set('lender')} placeholder="국민은행" /></label>
         <label className="fld"><span>대출금액(원) *</span><input className="modal-input" type="number" value={f.amount} onChange={set('amount')} /></label>
+        <label className="fld"><span>현재잔액(원)</span><input className="modal-input" type="number" value={f.curBalance} onChange={set('curBalance')} placeholder="비우면 자동계산" /></label>
         <label className="fld"><span>연이자율(%)</span><input className="modal-input" type="number" step="0.01" value={f.rate} onChange={set('rate')} /></label>
         <label className="fld"><span>대출기간(개월) *</span><input className="modal-input" type="number" value={f.term} onChange={set('term')} placeholder="360" /></label>
         <label className="fld"><span>시작일</span><input className="modal-input" type="date" value={f.start} onChange={set('start')} /></label>
@@ -431,4 +432,123 @@ function LoanView() {
   );
 }
 
-Object.assign(window, { SummaryView, LedgerView, MonthlyView, InvestView, LoanView });
+/* ============== 🗓️ 납부 캘린더 ============== */
+function CalendarView() {
+  const cal = WF.calendar || {};
+  const cm = WF.calMonth || '';
+  const parts = cm.split('-');
+  const y = parseInt(parts[0], 10), mo = parseInt(parts[1], 10);
+  const first = new Date(y, mo - 1, 1).getDay();
+  const days = new Date(y, mo, 0).getDate();
+  const dows = ['일', '월', '화', '수', '목', '금', '토'];
+  const cells = [];
+  for (let i = 0; i < first; i++) cells.push(null);
+  for (let d = 1; d <= days; d++) cells.push(d);
+  const total = Object.keys(cal).reduce((s, d) => s + cal[d].reduce((t, x) => t + x.amount, 0), 0);
+  const loanSum = Object.keys(cal).reduce((s, d) => s + cal[d].filter(x => x.type === 'loan').reduce((t, x) => t + x.amount, 0), 0);
+
+  return (
+    <React.Fragment>
+      <div className="grid grid-3">
+        <Kpi label="이번 달 예정 지출" icon="calendar" tone="purple" value={KRW(total)} delta="대출 상환 + 고정비" />
+        <Kpi label="대출 상환" icon="bank" tone="rose" value={KRW(loanSum)} accent="expense" />
+        <Kpi label="고정비" icon="home" tone="blue" value={KRW(total - loanSum)} />
+      </div>
+      <div className="card wide">
+        <SectionTitle icon="calendar">납부 캘린더 · {cm}</SectionTitle>
+        <div className="cal-grid">
+          {dows.map((d) => <div className="cal-dow" key={d}>{d}</div>)}
+          {cells.map((d, i) => (
+            <div className={`cal-cell ${d ? '' : 'empty'} ${d && cal[d] ? 'has' : ''}`} key={i}>
+              {d && <div className="cal-day">{d}</div>}
+              {d && (cal[d] || []).map((it, j) => (
+                <div className="cal-item" key={j} title={it.label}>
+                  <span>{it.emoji} {it.label}</span>
+                  <span className="cal-amt">{KRW(it.amount)}</span>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+        <span className="chart-note" style={{ marginTop: 10, display: 'block' }}>🏦 대출 납부일 · 📌 이번 달 고정비 결제일 기준</span>
+      </div>
+    </React.Fragment>
+  );
+}
+
+/* ============== 🎯 목표 ============== */
+function etaText(m) {
+  if (m === 0) return '🎉 달성!';
+  if (m == null) return '데이터 부족';
+  if (m < 12) return `약 ${m}개월 후`;
+  return `약 ${Math.floor(m / 12)}년 ${m % 12}개월 후`;
+}
+function GoalForm() {
+  const blank = { name: '', target: '', basis: '순자산', memo: '' };
+  const [f, setF] = React.useState(blank);
+  const [busy, setBusy] = React.useState(false);
+  const set = (k) => (e) => setF(p => ({ ...p, [k]: e.target.value }));
+  async function add() {
+    if (!f.name || !f.target) { alert('목표명·목표금액은 필수예요.'); return; }
+    setBusy(true);
+    try { await window.apiPost({ action: 'goal_add', goal: f }); setF(blank); if (window.reloadWF) await window.reloadWF(); }
+    catch (e) { alert('추가 실패: ' + e.message); }
+    setBusy(false);
+  }
+  return (
+    <div className="card">
+      <SectionTitle icon="target">목표 추가</SectionTitle>
+      <div className="modal-grid" style={{ marginTop: 12 }}>
+        <label className="fld"><span>목표명 *</span><input className="modal-input" value={f.name} onChange={set('name')} placeholder="전세보증금" /></label>
+        <label className="fld"><span>목표금액(원) *</span><input className="modal-input" type="number" value={f.target} onChange={set('target')} /></label>
+        <label className="fld"><span>기준</span><select className="modal-input" value={f.basis} onChange={set('basis')}><option>순자산</option><option>현금잔액</option><option>투자자산</option></select></label>
+        <label className="fld"><span>메모</span><input className="modal-input" value={f.memo} onChange={set('memo')} /></label>
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 14 }}>
+        <button className="btn" onClick={add} disabled={busy}><Icon name="plus" size={16} stroke={2.2} />{busy ? '추가중…' : '목표 추가'}</button>
+      </div>
+    </div>
+  );
+}
+async function deleteGoal(g) {
+  if (!window.confirm(`'${g.name}' 목표를 삭제할까요?`)) return;
+  try { await window.apiPost({ action: 'goal_delete', name: g.name, target: g.target }); if (window.reloadWF) await window.reloadWF(); }
+  catch (e) { alert('삭제 실패: ' + e.message); }
+}
+function GoalView() {
+  const goals = WF.goals || [];
+  return (
+    <React.Fragment>
+      <GoalForm />
+      {goals.length === 0 ? (
+        <div className="card" style={{ color: 'var(--ink-2)' }}>🎯 목표를 추가하면 현재 자산 대비 진행률과 예상 달성 시점을 보여드려요.</div>
+      ) : goals.map((g, i) => (
+        <div className="card" key={i}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div className="card-label" style={{ margin: 0 }}>
+              <IconChip name="target" tone="green" size={30} />
+              <div>
+                <div style={{ fontWeight: 700 }}>{g.name}</div>
+                <div style={{ fontSize: 12, color: 'var(--ink-3)' }}>기준: {g.basis}</div>
+              </div>
+            </div>
+            <button className="btn ghost sm" title="삭제" onClick={() => deleteGoal(g)} style={{ padding: '4px 6px', color: 'var(--ink-3)' }}><Icon name="x" size={14} /></button>
+          </div>
+          <div className="goal-prog"><span style={{ width: Math.min(g.ratio, 100) + '%' }}></span></div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+            <span style={{ color: 'var(--blue)', fontWeight: 700 }}>{g.ratio}%</span>
+            <span style={{ color: 'var(--ink-2)' }}>{WON(g.current)} / {WON(g.target)}</span>
+          </div>
+          <div className="loan-meta">
+            <span>남은 금액 <b>{WON(g.remain)}</b></span>
+            <span>달성 예상 <b style={{ color: g.etaMonths === 0 ? 'var(--save)' : 'var(--ink)' }}>{etaText(g.etaMonths)}</b></span>
+            {g.memo && <span>📝 {g.memo}</span>}
+          </div>
+        </div>
+      ))}
+      <span className="chart-note">※ 달성 예상은 최근 월평균 순저축(수입−지출) 기준 추정이에요.</span>
+    </React.Fragment>
+  );
+}
+
+Object.assign(window, { SummaryView, LedgerView, MonthlyView, InvestView, LoanView, CalendarView, GoalView });

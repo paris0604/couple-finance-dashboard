@@ -12,10 +12,12 @@ var CONFIG = {
   INVEST_ID: '1LbdkfGt6HTupOh6r95TgzYEhRRDjmtM3Ljp2urSIKlc',
   INVEST_TAB: 'transactions',
   LOAN_TAB: '대출',   // 가계부 스프레드시트 안에 생성 (없으면 자동 생성)
+  GOAL_TAB: '목표',
 };
 
 var LEDGER_COLS = ['거래ID', '날짜', '구분', '분류', '금액', '지출구분', '결제수단', '메모'];
-var LOAN_COLS = ['대출명', '대출기관', '대출금액', '연이자율(%)', '대출기간(개월)', '시작일', '납부일', '상환방식', '메모'];
+var LOAN_COLS = ['대출명', '대출기관', '대출금액', '현재잔액', '연이자율(%)', '대출기간(개월)', '시작일', '납부일', '상환방식', '메모'];
+var GOAL_COLS = ['목표명', '목표금액', '기준', '메모'];   // 기준: 순자산/현금잔액/투자자산
 var FIXED = ['주거', '통신', '보험', '구독', '교통(정액)', '대출원금상환'];
 var VARIABLE = ['식비-장보기', '식비-외식', '식비-카페', '생활용품', '교통(비정기)', '의료', '문화·여가', '의류·미용', '웨딩', '경조사', '기타'];
 var ALLOWANCE = '용돈';
@@ -247,6 +249,40 @@ function buildWF(month) {
   var invMonths = {}; iRows.forEach(function (r) { if (r._val > 0) invMonths[r._ym] = 1; });
   invest.monthlyAvg = Math.round(invest.principalTotal / (Object.keys(invMonths).length || 1));
 
+  // 대출(1회 계산) → 캘린더에 재사용
+  var loanData = buildLoans(new Date());
+
+  // 캘린더: 대출 납부일 + 이번 달 고정비 결제일
+  var calendar = {};
+  loanData.loans.forEach(function (ln) {
+    var dd = parseInt(ln.payDay, 10);
+    if (dd >= 1 && dd <= 31) (calendar[dd] = calendar[dd] || []).push({ label: ln.name, amount: ln.monthly, type: 'loan', emoji: '🏦' });
+  });
+  exp.forEach(function (r) {
+    if (FIXED.indexOf(r['분류']) >= 0) {
+      var dy = parseInt(r._date.slice(8, 10), 10);
+      if (dy >= 1) (calendar[dy] = calendar[dy] || []).push({ label: r['분류'], amount: r._amt, type: 'fixed', emoji: EMOJI[r['분류']] || '📌' });
+    }
+  });
+
+  // 목표: 목표 시트 → 현재값 대비 진행률 + 예상 달성시점
+  ensureTab(CONFIG.GOAL_TAB, GOAL_COLS);
+  var goalRows = readSheet(CONFIG.LEDGER_ID, CONFIG.GOAL_TAB);
+  var avgNet = monthly.length ? Math.round(monthly.reduce(function (s, mm) { return s + mm.net; }, 0) / monthly.length) : 0;
+  var goals = goalRows.map(function (g) {
+    var target = num(g['목표금액']); if (target <= 0) return null;
+    var basis = g['기준'] || '순자산';
+    var cur = basis === '현금잔액' ? cashBalance : (basis === '투자자산' ? invest.principalTotal : networth.total);
+    var remainAmt = Math.max(target - cur, 0);
+    return {
+      name: g['목표명'] || '목표', target: Math.round(target), basis: basis,
+      current: Math.round(cur), ratio: target > 0 ? Math.round(cur / target * 1000) / 10 : 0,
+      remain: Math.round(remainAmt),
+      etaMonths: (avgNet > 0 && remainAmt > 0) ? Math.ceil(remainAmt / avgNet) : (remainAmt <= 0 ? 0 : null),
+      memo: g['메모'] || '',
+    };
+  }).filter(function (x) { return x; });
+
   var wf = {
     month: month.slice(0, 4) + '년 ' + parseInt(month.slice(5), 10) + '월',
     income: { total: incomeTotal, items: incomeItems },
@@ -261,18 +297,40 @@ function buildWF(month) {
     ledgerStrip: { fixed: fixed, variable: variable, allowanceJ: allowJ, allowanceS: allowS },
     txns: txns,
     invest: invest,
-    loans: buildLoans(new Date()),
+    loans: loanData,
+    calendar: calendar, calMonth: month, calAvgNet: avgNet,
+    goals: goals,
   };
   return { ok: true, months: months, month: month, wf: wf };
 }
 
-/* ---------- 대출 (상환 스케줄 자동계산) ---------- */
-function ensureLoanTab() {
+/* ---------- 시트 보장 (없으면 생성, 헤더 빠진 컬럼 자동 추가) ---------- */
+function ensureTab(tabName, cols) {
   var ss = SpreadsheetApp.openById(CONFIG.LEDGER_ID);
-  var sh = ss.getSheetByName(CONFIG.LOAN_TAB);
-  if (!sh) { sh = ss.insertSheet(CONFIG.LOAN_TAB); sh.appendRow(LOAN_COLS); }
+  var sh = ss.getSheetByName(tabName);
+  if (!sh) { sh = ss.insertSheet(tabName); sh.appendRow(cols); return sh; }
+  var lc = Math.max(sh.getLastColumn(), 1);
+  var header = sh.getRange(1, 1, 1, lc).getValues()[0].map(function (h) { return String(h).trim(); });
+  var changed = false;
+  cols.forEach(function (c) { if (header.indexOf(c) < 0) { header.push(c); changed = true; } });
+  if (changed) sh.getRange(1, 1, 1, header.length).setValues([header]);
   return sh;
 }
+function ensureLoanTab() { return ensureTab(CONFIG.LOAN_TAB, LOAN_COLS); }
+function loanColValue(col, L) {
+  if (col === '대출명') return L.name || '대출';
+  if (col === '대출기관') return L.lender || '';
+  if (col === '대출금액') return num(L.amount);
+  if (col === '현재잔액') return L.curBalance ? num(L.curBalance) : '';
+  if (col === '연이자율(%)') return num(L.rate);
+  if (col === '대출기간(개월)') return Math.round(num(L.term));
+  if (col === '시작일') return L.start || '';
+  if (col === '납부일') return L.payDay || '';
+  if (col === '상환방식') return L.method || '원리금균등';
+  if (col === '메모') return L.memo || '';
+  return '';
+}
+/* ---------- 대출 (상환 스케줄 자동계산) ---------- */
 function monthsBetween(startYmd, today) {
   var s = String(startYmd).match(/(\d{4})[-/.](\d{1,2})/);
   if (!s) return 0;
@@ -307,8 +365,18 @@ function buildLoans(today) {
     var method = r['상환방식'] || '원리금균등';
     var sched = loanSchedule(P, rate, n, method);
     var elapsed = Math.min(monthsBetween(r['시작일'], today), sched.length);
-    var remain = sched.slice(elapsed);
-    var curBal = (elapsed > 0) ? sched[elapsed - 1].잔액 : P;
+    // 현재잔액을 입력했으면 그 값으로 남은 일정을 다시 계산(더 정확), 없으면 경과개월로 추정
+    var givenBal = num(r['현재잔액']);
+    var curBal, remain, remainMonths;
+    if (givenBal > 0) {
+      curBal = givenBal;
+      remainMonths = Math.max(n - elapsed, 1);
+      remain = loanSchedule(curBal, rate, remainMonths, method);
+    } else {
+      curBal = (elapsed > 0) ? sched[elapsed - 1].잔액 : P;
+      remain = sched.slice(elapsed);
+      remainMonths = Math.max(n - elapsed, 0);
+    }
     var monthly = remain.length ? remain[0].상환액 : 0;
     // 상환율 + 기간(시작~만기)
     var startStr = ymd(r['시작일']);
@@ -320,7 +388,7 @@ function buildLoans(today) {
     loans.push({
       name: r['대출명'] || '대출', lender: r['대출기관'] || '', principal: P,
       balance: Math.round(curBal), rate: rate, term: n, elapsed: elapsed,
-      remainMonths: Math.max(n - elapsed, 0), payDay: r['납부일'] || '', method: method,
+      remainMonths: remainMonths, payDay: r['납부일'] || '', method: method,
       monthly: Math.round(monthly), paidRatio: paidRatio, start: startDisp, end: endDisp,
       totalInterestRemain: Math.round(remain.reduce(function (s, x) { return s + x.이자; }, 0)),
       memo: r['메모'] || '',
@@ -372,8 +440,8 @@ function doPost(e) {
     if (body.action === 'loan_add') {
       var lsh = ensureLoanTab();
       var L = body.loan || {};
-      lsh.appendRow([L.name || '대출', L.lender || '', num(L.amount), num(L.rate),
-        Math.round(num(L.term)), L.start || '', L.payDay || '', L.method || '원리금균등', L.memo || '']);
+      var hdr = lsh.getRange(1, 1, 1, lsh.getLastColumn()).getValues()[0].map(function (h) { return String(h).trim(); });
+      lsh.appendRow(hdr.map(function (h) { return loanColValue(h, L); }));
       return json({ ok: true, added: 1 });
     }
     if (body.action === 'loan_delete') {
@@ -386,6 +454,23 @@ function doPost(e) {
         }
       }
       return json({ ok: false, error: '대출을 찾을 수 없습니다' });
+    }
+    // ── 목표 추가/삭제 ──
+    if (body.action === 'goal_add') {
+      var gsh = ensureTab(CONFIG.GOAL_TAB, GOAL_COLS);
+      var G = body.goal || {};
+      gsh.appendRow([G.name || '목표', num(G.target), G.basis || '순자산', G.memo || '']);
+      return json({ ok: true, added: 1 });
+    }
+    if (body.action === 'goal_delete') {
+      var gsh2 = ensureTab(CONFIG.GOAL_TAB, GOAL_COLS);
+      var gv = gsh2.getDataRange().getValues();
+      for (var gi = 1; gi < gv.length; gi++) {
+        if (String(gv[gi][0]) === String(body.name) && Math.round(num(gv[gi][1])) === Math.round(num(body.target))) {
+          gsh2.deleteRow(gi + 1); return json({ ok: true, deleted: 1 });
+        }
+      }
+      return json({ ok: false, error: '목표를 찾을 수 없습니다' });
     }
 
     var sh = SpreadsheetApp.openById(CONFIG.LEDGER_ID).getSheetByName(CONFIG.LEDGER_TAB);
