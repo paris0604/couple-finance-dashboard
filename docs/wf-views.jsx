@@ -419,7 +419,7 @@ function LoanView() {
                 <tr key={i}>
                   <td className="t-date">{s.label}</td>
                   <td className="amt">{WON(s.원금)}</td>
-                  <td className="amt" style={{ color: 'var(--expense)' }}>{WON(s.이자)}</td>
+                  <td className="amt" style={{ color: 'var(--purple)' }}>{WON(s.이자)}</td>
                   <td className="amt"><strong>{WON(s.상환액)}</strong></td>
                   <td className="amt">{WON(s.잔액)}</td>
                 </tr>
