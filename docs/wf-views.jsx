@@ -360,7 +360,7 @@ function LoanView() {
     <React.Fragment>
       <LoanForm />
       <div className="grid grid-3">
-        <Kpi label="총 대출잔액" icon="bank" tone="rose" value={KRW(L.totalBalance)} accent="expense" delta="현재 남은 원금 합계" />
+        <Kpi label="총 대출잔액" icon="bank" tone="purple" value={KRW(L.totalBalance)} accent="loan" delta="현재 남은 원금 합계" />
         <Kpi label="월 상환액 합계" icon="receipt" tone="purple" value={KRW(L.totalMonthly)} delta="이번 달 기준" />
         <Kpi label="평균 이자율" icon="trending" tone="yellow" value={L.avgRate + '%'} delta="잔액 가중평균" />
       </div>
@@ -380,7 +380,7 @@ function LoanView() {
                 </div>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
                   <div style={{ textAlign: 'right' }}>
-                    <div className="num" style={{ fontWeight: 700, fontSize: 17, color: 'var(--expense)' }}>{WON(ln.balance)}</div>
+                    <div className="num" style={{ fontWeight: 700, fontSize: 17, color: '#6D4FB8' }}>{WON(ln.balance)}</div>
                     <div style={{ fontSize: 11.5, color: 'var(--ink-3)' }}>/ {WON(ln.principal)}</div>
                   </div>
                   <button className="btn ghost sm" title="삭제" onClick={() => deleteLoan(ln)}

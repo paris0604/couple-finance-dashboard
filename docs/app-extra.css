@@ -44,6 +44,9 @@ select.modal-input { appearance: none; -webkit-appearance: none; cursor: pointer
 .cal-item .cal-amt { color: var(--expense); font-weight: 700; font-variant-numeric: tabular-nums; }
 @media (max-width: 640px) { .cal-cell { min-height: 56px; padding: 4px; } .cal-item { font-size: 9px; } }
 
+/* ── 대출 전용 진한 보라 accent (가독성 확보) ── */
+.kpi.accent-loan .kpi-val { color: #6D4FB8; }
+
 /* ── 목표 진행률 ── */
 .goal-prog { height: 12px; border-radius: 999px; background: var(--paper-2); overflow: hidden; margin: 10px 0; }
 .goal-prog > span { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--blue), var(--mint)); transition: width .4s ease; }
