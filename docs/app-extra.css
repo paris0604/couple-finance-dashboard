@@ -28,7 +28,7 @@ select.modal-input { appearance: none; -webkit-appearance: none; cursor: pointer
   background: var(--card); box-shadow: var(--shadow-sm); }
 .loan-prog { height: 10px; border-radius: 999px; background: var(--paper-2); overflow: hidden; margin: 12px 0 8px; }
 .loan-prog > span { display: block; height: 100%; border-radius: 999px;
-  background: linear-gradient(90deg, var(--brand), var(--mint)); transition: width .4s ease; }
+  background: linear-gradient(90deg, var(--purple), var(--purple-mid)); transition: width .4s ease; }
 .loan-meta { display: flex; flex-wrap: wrap; gap: 7px 16px; font-size: 12.5px; color: var(--ink-2); margin-top: 10px; }
 .loan-meta b { color: var(--ink); font-weight: 700; }
 

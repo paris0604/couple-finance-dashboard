@@ -389,7 +389,7 @@ function LoanView() {
               </div>
               <div className="loan-prog"><span style={{ width: Math.min(ln.paidRatio, 100) + '%' }}></span></div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5 }}>
-                <span style={{ color: 'var(--brand)', fontWeight: 700 }}>상환율 {ln.paidRatio}%</span>
+                <span style={{ color: 'var(--purple)', fontWeight: 700 }}>상환율 {ln.paidRatio}%</span>
                 <span style={{ color: 'var(--ink-3)' }}>경과 {ln.elapsed}/{ln.term}개월 · 남은 {ln.remainMonths}개월</span>
               </div>
               <div className="loan-meta">
