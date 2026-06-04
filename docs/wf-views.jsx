@@ -10,13 +10,24 @@ function SummaryView({ excludeWedding, setExcludeWedding, comp, setComp }) {
   const rate = excludeWedding ? k.savingRate : k.savingRateWithWedding;
   const saving = WF.income.total - expense;
   const shareData = WF.expense.byShare.map(s => ({ label: SHARE_LABEL[s.key], amount: s.amount }));
+  const investAsset = (WF.invest || {}).principalTotal || 0;
+
+  // 전월 대비 증감 (없으면 설명문 fallback)
+  const P = WF.prev;
+  const delta = (cur, prevVal, goodUp, fallback) => {
+    if (P == null || prevVal == null) return fallback;
+    const d = cur - prevVal;
+    if (d === 0) return <span style={{ color: 'var(--ink-3)' }}>전월과 동일</span>;
+    const up = d > 0, good = goodUp ? up : !up;
+    return <span style={{ color: good ? 'var(--save)' : 'var(--expense)' }}>전월비 {up ? '▲' : '▼'}{KRW(Math.abs(d))}</span>;
+  };
 
   return (
     <React.Fragment>
       <div className="grid grid-4">
-        <Kpi label="합산 수입" icon="wallet" tone="blue" value={KRW(WF.income.total)} accent="income" delta="지영 + 승화 + 상여" />
-        <Kpi label="총 지출" icon="receipt" tone="rose" value={KRW(expense)} accent="expense" delta={excludeWedding ? '웨딩 제외' : '웨딩 포함'} />
-        <Kpi label="투자 자산" icon="trending" tone="yellow" value={KRW((WF.invest || {}).principalTotal || 0)} delta="누적 순투입원금" />
+        <Kpi label="합산 수입" icon="wallet" tone="blue" value={KRW(WF.income.total)} accent="income" delta={delta(WF.income.total, P && P.income, true, '지영 + 승화 + 상여')} />
+        <Kpi label="총 지출" icon="receipt" tone="rose" value={KRW(expense)} accent="expense" delta={delta(expense, P && (excludeWedding ? P.expenseNo : P.expenseWith), false, excludeWedding ? '웨딩 제외' : '웨딩 포함')} />
+        <Kpi label="투자 자산" icon="trending" tone="yellow" value={KRW(investAsset)} delta={delta(investAsset, P && P.investAsset, true, '누적 순투입원금')} />
         <Kpi label="저축여력률" icon="trending" value={rate + '%'} accent="save" hero delta="잔여 ÷ 수입" />
       </div>
 
@@ -31,7 +42,9 @@ function SummaryView({ excludeWedding, setExcludeWedding, comp, setComp }) {
         <div className="nw-main">
           <SectionTitle icon="gem">합산 순자산</SectionTitle>
           <div className="nw-num">{KRW(WF.networth.total)}</div>
-          <div className="chart-note">현금 잔액 + 투자 (= 누적 수입 − 지출)</div>
+          <div className="chart-note">현금 잔액 + 투자 (= 누적 수입 − 지출)
+            {P && P.networth != null && (() => { const d = WF.networth.total - P.networth; return <span style={{ marginLeft: 8, color: d >= 0 ? 'var(--save)' : 'var(--expense)', fontWeight: 700 }}>· 전월비 {d >= 0 ? '▲' : '▼'}{KRW(Math.abs(d))}</span>; })()}
+          </div>
         </div>
         <Donut size={110} data={WF.networth.parts.map(p => ({ label: p.label, amount: p.amount }))} colors={['var(--nw-house)', 'var(--nw-invest)']} />
       </div>
@@ -148,6 +161,138 @@ function InvestView() {
           <span className="chart-note">손익 컬럼은 2차 — 회색 준비중</span>
         </div>
         <HoldingsTable holdings={v.holdings} />
+      </div>
+
+      <InvestProjection invest={v} />
+    </React.Fragment>
+  );
+}
+
+/* 투자 자산 증가 예측 — 현 월평균 납입을 계속한다고 가정 */
+function fv(current, monthly, annualPct, years) {
+  const rm = annualPct / 100 / 12, n = years * 12;
+  const fvCur = current * Math.pow(1 + rm, n);
+  const fvCon = rm === 0 ? monthly * n : monthly * ((Math.pow(1 + rm, n) - 1) / rm);
+  return Math.round(fvCur + fvCon);
+}
+function InvestProjection({ invest }) {
+  const R = { textAlign: 'right' };
+  const cur = invest.principalTotal || 0;
+  const monthly = invest.monthlyAvg || 0;
+  const years = [1, 3, 5, 10, 20];
+  const rates = [{ r: 4, label: '보수 4%' }, { r: 6, label: '중립 6%' }, { r: 8, label: '적극 8%' }];
+  return (
+    <div className="card wide">
+      <div className="table-toolbar" style={{ justifyContent: 'space-between' }}>
+        <SectionTitle icon="trending">자산 증가 예측</SectionTitle>
+        <span className="chart-note">월 {KRW(monthly)} 납입 지속 가정 · 연 수익률 시나리오</span>
+      </div>
+      <div className="table-wrap" style={{ marginTop: 8 }}>
+        <table className="txn">
+          <thead><tr>
+            <th>기간</th><th style={R}>납입 원금 누계</th>
+            {rates.map(x => <th key={x.r} style={R}>{x.label}</th>)}
+          </tr></thead>
+          <tbody>
+            {years.map(y => {
+              const paid = cur + monthly * 12 * y;
+              return (
+                <tr key={y}>
+                  <td className="t-date">{y}년 후</td>
+                  <td className="amt">{KRW(paid)}</td>
+                  {rates.map(x => {
+                    const val = fv(cur, monthly, x.r, y);
+                    return <td key={x.r} className="amt" style={{ color: 'var(--save)', fontWeight: 700 }}>{KRW(val)}</td>;
+                  })}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      <span className="chart-note" style={{ marginTop: 8, display: 'block' }}>
+        ※ 복리 가정의 단순 추정이며 실제 수익률은 변동합니다. 월평균 납입은 지금까지 투자 내역 기준이에요.
+      </span>
+    </div>
+  );
+}
+
+/* ============== 🗓️ 월별 ============== */
+function MonthBars({ data }) {
+  if (!data.length) return null;
+  const H = 200, pad = 28, step = 56, bw = 16, gap = 6;
+  const W = Math.max(pad * 2 + data.length * step, 320);
+  const max = Math.max.apply(null, data.map(d => Math.max(d.income, d.expense)).concat([1]));
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 220 }}>
+      {data.map((d, i) => {
+        const x = pad + i * step;
+        const ih = (d.income / max) * (H - pad * 2), eh = (d.expense / max) * (H - pad * 2);
+        return (
+          <g key={i}>
+            <rect x={x} y={H - pad - ih} width={bw} height={ih} fill="var(--income)" rx="3" />
+            <rect x={x + bw + gap} y={H - pad - eh} width={eh > 0 ? bw : 0} height={eh} fill="var(--expense)" rx="3" />
+            <text x={x + bw} y={H - 9} fontSize="11" fill="var(--ink-3)" textAnchor="middle" fontFamily="var(--font-hand)">{d.label}</text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+function MonthlyView() {
+  const M = WF.monthly || [], Y = WF.yearly || [];
+  const R = { textAlign: 'right' };
+  return (
+    <React.Fragment>
+      <div className="card wide">
+        <div className="table-toolbar" style={{ justifyContent: 'space-between' }}>
+          <SectionTitle icon="calendar">월별 수입 · 지출</SectionTitle>
+          <span className="trend-legend" style={{ margin: 0 }}>
+            <span className="lg"><span className="ln" style={{ background: 'var(--income)' }}></span>수입</span>
+            <span className="lg"><span className="ln" style={{ background: 'var(--expense)' }}></span>지출</span>
+          </span>
+        </div>
+        <MonthBars data={M} />
+      </div>
+
+      <div className="card wide">
+        <SectionTitle icon="list">월별 현황</SectionTitle>
+        <div className="table-wrap" style={{ marginTop: 8 }}>
+          <table className="txn">
+            <thead><tr><th>월</th><th style={R}>수입</th><th style={R}>지출</th><th style={R}>잔여(순)</th><th style={R}>저축률</th></tr></thead>
+            <tbody>
+              {M.slice().reverse().map((m, i) => (
+                <tr key={i}>
+                  <td className="t-date">{m.label}</td>
+                  <td className="amt in">{WON(m.income)}</td>
+                  <td className="amt out">{WON(m.expense)}</td>
+                  <td className="amt" style={{ color: m.net >= 0 ? 'var(--save)' : 'var(--expense)', fontWeight: 700 }}>{m.net >= 0 ? '+' : '−'}{WON(Math.abs(m.net))}</td>
+                  <td style={R}>{m.rate}%</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="card wide">
+        <SectionTitle icon="trending">연간 누계</SectionTitle>
+        <div className="table-wrap" style={{ marginTop: 8 }}>
+          <table className="txn">
+            <thead><tr><th>연도</th><th style={R}>수입</th><th style={R}>지출</th><th style={R}>잔여(순)</th><th style={R}>저축률</th></tr></thead>
+            <tbody>
+              {Y.slice().reverse().map((y, i) => (
+                <tr key={i}>
+                  <td className="t-date"><strong>{y.year}년</strong></td>
+                  <td className="amt in">{WON(y.income)}</td>
+                  <td className="amt out">{WON(y.expense)}</td>
+                  <td className="amt" style={{ color: y.net >= 0 ? 'var(--save)' : 'var(--expense)', fontWeight: 700 }}>{y.net >= 0 ? '+' : '−'}{WON(Math.abs(y.net))}</td>
+                  <td style={R}>{y.rate}%</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </React.Fragment>
   );
@@ -286,4 +431,4 @@ function LoanView() {
   );
 }
 
-Object.assign(window, { SummaryView, LedgerView, InvestView, LoanView });
+Object.assign(window, { SummaryView, LedgerView, MonthlyView, InvestView, LoanView });

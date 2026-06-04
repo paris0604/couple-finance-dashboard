@@ -207,6 +207,46 @@ function buildWF(month) {
     income: incomeTotal, expense: totalWith,
   };
 
+  // 전월 대비 지표
+  var mi = months.indexOf(month);
+  var prevMonth = (mi >= 0 && mi + 1 < months.length) ? months[mi + 1] : null;
+  var prev = null;
+  if (prevMonth) {
+    var pm = L.filter(function (r) { return r._ym === prevMonth; });
+    var pInvest = 0, pHouse = 0;
+    I.forEach(function (r) { if (r._ym <= prevMonth) pInvest += r._val; });
+    L.forEach(function (r) { if (r._ym <= prevMonth) pHouse += (r['구분'] === '수입' ? r._amt : -r._amt); });
+    prev = {
+      income: Math.round(sum(pm.filter(function (r) { return r['구분'] === '수입'; }))),
+      expenseWith: Math.round(sum(pm.filter(function (r) { return r['구분'] === '지출'; }))),
+      expenseNo: Math.round(sum(pm.filter(function (r) { return r['구분'] === '지출' && r['분류'] !== '웨딩'; }))),
+      investAsset: Math.round(pInvest),
+      networth: Math.round(pHouse),
+    };
+  }
+
+  // 월별 / 연간 집계 (전체 기간)
+  var magg = {}, yagg = {};
+  L.forEach(function (r) {
+    var y = r._ym; if (!y) return; var yr = y.slice(0, 4);
+    if (!magg[y]) magg[y] = { income: 0, expense: 0 };
+    if (!yagg[yr]) yagg[yr] = { income: 0, expense: 0 };
+    var k = r['구분'] === '수입' ? 'income' : 'expense';
+    magg[y][k] += r._amt; yagg[yr][k] += r._amt;
+  });
+  var monthly = Object.keys(magg).sort().map(function (y) {
+    var a = magg[y], net = a.income - a.expense;
+    return { ym: y, label: y.slice(2, 4) + '.' + y.slice(5), income: Math.round(a.income), expense: Math.round(a.expense), net: Math.round(net), rate: a.income > 0 ? Math.round(net / a.income * 100) : 0 };
+  });
+  var yearly = Object.keys(yagg).sort().map(function (yr) {
+    var a = yagg[yr], net = a.income - a.expense;
+    return { year: yr, income: Math.round(a.income), expense: Math.round(a.expense), net: Math.round(net), rate: a.income > 0 ? Math.round(net / a.income * 100) : 0 };
+  });
+
+  // 투자 월평균 납입 (예측용)
+  var invMonths = {}; iRows.forEach(function (r) { if (r._val > 0) invMonths[r._ym] = 1; });
+  invest.monthlyAvg = Math.round(invest.principalTotal / (Object.keys(invMonths).length || 1));
+
   var wf = {
     month: month.slice(0, 4) + '년 ' + parseInt(month.slice(5), 10) + '월',
     income: { total: incomeTotal, items: incomeItems },
@@ -214,6 +254,9 @@ function buildWF(month) {
     kpi: { incomeSum: incomeTotal, expenseSum: expenseKpi, savingInvest: saving, savingRate: savingRate, savingRateWithWedding: savingRateW },
     cash: cash,
     networth: networth,
+    prev: prev,
+    monthly: monthly,
+    yearly: yearly,
     trend: trend,
     ledgerStrip: { fixed: fixed, variable: variable, allowanceJ: allowJ, allowanceS: allowS },
     txns: txns,
