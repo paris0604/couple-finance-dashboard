@@ -332,7 +332,7 @@ function loanColValue(col, L) {
 }
 /* ---------- 대출 (상환 스케줄 자동계산) ---------- */
 function monthsBetween(startYmd, today) {
-  var s = String(startYmd).match(/(\d{4})[-/.](\d{1,2})/);
+  var s = ymd(startYmd).match(/(\d{4})-(\d{2})/);   // Date 객체/문자열 모두 정규화 후 파싱
   if (!s) return 0;
   return Math.max((today.getFullYear() - (+s[1])) * 12 + (today.getMonth() + 1 - (+s[2])), 0);
 }
