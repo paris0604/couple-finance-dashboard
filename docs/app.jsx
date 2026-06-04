@@ -53,6 +53,29 @@ const INCOME_CATS = ['지영 급여', '승화 급여', '상여·보너스', '기
 const OWNERS = ['공통', '지영', '승화'];
 const PAYS = ['', '체크카드', '신용카드', '계좌이체'];
 
+// 종목 코드/티커 → 설명 (자주 쓰는 ETF·종목). 없으면 티커만 표시.
+const TICKER_INFO = {
+  // 미국 ETF
+  VOO: 'S&P500 · 미국 대형주', IVV: 'S&P500 (iShares)', SPLG: 'S&P500 (저보수)', SPY: 'S&P500',
+  VTI: '미국 전체주식', QQQ: '나스닥100 · 미국 기술주', QQQM: '나스닥100 (저보수)',
+  SCHD: '미국 배당성장', JEPI: '미국 커버드콜 배당', JEPQ: '나스닥 커버드콜 배당',
+  VT: '전세계 주식', VEA: '선진국(미국 외)', VWO: '신흥국', VYM: '미국 고배당',
+  DIA: '다우존스30', BND: '미국 종합채권', TLT: '미국 장기국채', SHY: '미국 단기국채',
+  O: '리얼티인컴 · 월배당 리츠', GLD: '금 현물',
+  // 미국 개별주
+  AAPL: '애플', MSFT: '마이크로소프트', NVDA: '엔비디아', TSLA: '테슬라',
+  GOOGL: '알파벳(구글)', AMZN: '아마존', META: '메타', BRK_B: '버크셔해서웨이',
+  // 국내 ETF (종목코드)
+  '360750': 'TIGER 미국S&P500', '379800': 'KODEX 미국S&P500TR', '360200': 'ACE 미국S&P500',
+  '133690': 'TIGER 미국나스닥100', '367380': 'ACE 미국나스닥100',
+  '449180': 'TIGER 미국배당다우존스(SCHD)', '458730': 'TIGER 미국배당+7%프리미엄',
+  '069500': 'KODEX 200 · 코스피', '102110': 'TIGER 200',
+  '305720': 'KODEX 2차전지산업', '091160': 'KODEX 반도체', '305540': 'KODEX 2차전지',
+  '411060': 'ACE 미국30년국채', '148070': 'KOSEF 국고채10년', '153130': 'KODEX 단기채권',
+};
+function tickerDesc(t) { return TICKER_INFO[String(t).replace('.', '_')] || TICKER_INFO[t] || ''; }
+window.tickerDesc = tickerDesc;
+
 /* ---------- 셸 ---------- */
 function BrandMark() { return <span className="brand-mark"><Icon name="home" size={17} stroke={2} /></span>; }
 

@@ -281,20 +281,24 @@ function HoldingsTable({ holdings }) {
       <table className="txn">
         <thead>
           <tr>
-            <th>종목</th><th>계좌</th><th style={{ textAlign: 'right' }}>순투입원금</th>
+            <th>종목</th><th>설명</th><th>계좌</th><th style={{ textAlign: 'right' }}>순투입원금</th>
             <th style={{ textAlign: 'right' }}>평가손익</th><th style={{ textAlign: 'right' }}>수익률</th>
           </tr>
         </thead>
         <tbody>
-          {holdings.map((h, i) => (
-            <tr key={i}>
-              <td><span className="cat"><IconChip name="trending" tone="mint" size={26} /><strong>{h.ticker}</strong></span></td>
-              <td>{h.account}</td>
-              <td className="amt">{KRW(h.principal)}</td>
-              <td style={{ textAlign: 'right' }}><span className="soon">준비중</span></td>
-              <td style={{ textAlign: 'right' }}><span className="soon">준비중</span></td>
-            </tr>
-          ))}
+          {holdings.map((h, i) => {
+            const desc = (window.tickerDesc && window.tickerDesc(h.ticker)) || '';
+            return (
+              <tr key={i}>
+                <td><span className="cat"><IconChip name="trending" tone="mint" size={26} /><strong>{h.ticker}</strong></span></td>
+                <td style={{ color: 'var(--ink-2)', fontSize: 13 }}>{desc || '—'}</td>
+                <td>{h.account}</td>
+                <td className="amt">{KRW(h.principal)}</td>
+                <td style={{ textAlign: 'right' }}><span className="soon">준비중</span></td>
+                <td style={{ textAlign: 'right' }}><span className="soon">준비중</span></td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
