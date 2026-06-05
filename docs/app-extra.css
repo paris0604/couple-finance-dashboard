@@ -16,7 +16,7 @@
   --blue: #8FA086; --blue-bg: #EDF1E9; --blue-mid: #C0CABA;     /* 차트 '블루' → 세이지 */
   --sky: #C9B7AE;
   --yellow: #D49A78; --yellow-bg: #F6E8DD; --yellow-mid: #E6C3A6;  /* 따뜻한 테라코타 */
-  --purple: #54463A; --purple-mid: #8A7C6E;    /* 대출 = 브라운 */
+  --purple: #B06B43; --purple-mid: #D99E72;    /* 대출 = 테라코타 (검정과 구분) */
   --person-c: #9A8F80; --person-c-bg: #EFEBE5; /* 공통 = 토프 */
   --person-j: #C75F71; --person-j-bg: #FBE7EA; /* 지영 = 로즈 */
   --person-s: #8FA086; --person-s-bg: #EDF1E9; /* 승화 = 세이지 */
@@ -34,7 +34,7 @@ body {
     #FAF6F2 !important;
   background-attachment: fixed !important;
 }
-.kpi.accent-loan .kpi-val { color: #54463A; }   /* 대출 = 브라운 */
+.kpi.accent-loan .kpi-val { color: #B06B43; }   /* 대출 = 테라코타 */
 
 /* ── 거래 수정 모달 ── */
 .modal-overlay { position: fixed; inset: 0; background: rgba(22,28,45,.36);

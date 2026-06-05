@@ -256,12 +256,12 @@ function buildWF(month) {
   var calendar = {};
   loanData.loans.forEach(function (ln) {
     var dd = parseInt(ln.payDay, 10);
-    if (dd >= 1 && dd <= 31) (calendar[dd] = calendar[dd] || []).push({ label: ln.name, amount: ln.monthly, type: 'loan', emoji: '🏦' });
+    if (dd >= 1 && dd <= 31) (calendar[dd] = calendar[dd] || []).push({ label: ln.name, detail: ln.lender || '', amount: ln.monthly, type: 'loan', emoji: '🏦' });
   });
   exp.forEach(function (r) {
     if (FIXED.indexOf(r['분류']) >= 0) {
       var dy = parseInt(r._date.slice(8, 10), 10);
-      if (dy >= 1) (calendar[dy] = calendar[dy] || []).push({ label: r['분류'], amount: r._amt, type: 'fixed', emoji: EMOJI[r['분류']] || '📌' });
+      if (dy >= 1) (calendar[dy] = calendar[dy] || []).push({ label: r['분류'], detail: r['메모'] || '', amount: r._amt, type: 'fixed', emoji: EMOJI[r['분류']] || '📌' });
     }
   });
 

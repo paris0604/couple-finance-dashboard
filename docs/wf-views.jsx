@@ -462,8 +462,9 @@ function CalendarView() {
             <div className={`cal-cell ${d ? '' : 'empty'} ${d && cal[d] ? 'has' : ''}`} key={i}>
               {d && <div className="cal-day">{d}</div>}
               {d && (cal[d] || []).map((it, j) => (
-                <div className="cal-item" key={j} title={it.label}>
-                  <span>{it.emoji} {it.label}</span>
+                <div className="cal-item" key={j} title={`${it.label}${it.detail ? ' · ' + it.detail : ''}  ${WON(it.amount)}`}>
+                  <span>{it.emoji} {it.detail || it.label}</span>
+                  {it.detail && <span style={{ color: 'var(--ink-3)', fontSize: '9.5px' }}>{it.label}</span>}
                   <span className="cal-amt">{KRW(it.amount)}</span>
                 </div>
               ))}
