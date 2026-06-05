@@ -519,7 +519,7 @@ function sendLoanReminderKakao() {
   var refreshToken = props.getProperty('KAKAO_REFRESH_TOKEN');
   if (!clientId || !refreshToken) { Logger.log('카카오 키 미설정'); return; }
 
-  // 1) access_token 갱신
+  // 1. access_token 갱신
   var tokRes = UrlFetchApp.fetch('https://kauth.kakao.com/oauth/token', {
     method: 'post', muteHttpExceptions: true,
     payload: { grant_type: 'refresh_token', client_id: clientId, client_secret: clientSecret, refresh_token: refreshToken },
@@ -528,7 +528,7 @@ function sendLoanReminderKakao() {
   if (!tok.access_token) { Logger.log('토큰 갱신 실패: ' + tokRes.getContentText()); return; }
   if (tok.refresh_token) props.setProperty('KAKAO_REFRESH_TOKEN', tok.refresh_token); // 회전 시 저장
 
-  // 2) 내일(D-1) 납부 예정 대출
+  // 2. 내일(D-1) 납부 예정 대출
   var today = new Date();
   var tmr = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
   var tmrDay = tmr.getDate();
@@ -537,7 +537,7 @@ function sendLoanReminderKakao() {
   });
   if (!loans.length) { Logger.log('내일 납부 대출 없음'); return; }
 
-  // 3) 메시지
+  // 3. 메시지
   var total = 0;
   var lines = loans.map(function (l) {
     total += l.monthly;
@@ -546,7 +546,7 @@ function sendLoanReminderKakao() {
   var msg = '🔔 내일(' + (tmr.getMonth() + 1) + '/' + tmrDay + ') 대출 납부 예정\n'
     + lines.join('\n') + '\n합계 ' + Math.round(total).toLocaleString() + '원';
 
-  // 4) 카카오 나에게 보내기
+  // 4. 카카오 나에게 보내기
   var template = {
     object_type: 'text', text: msg,
     link: { web_url: 'https://paris0604.github.io/couple-finance-dashboard/', mobile_web_url: 'https://paris0604.github.io/couple-finance-dashboard/' },
