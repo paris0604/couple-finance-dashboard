@@ -2,6 +2,40 @@
 .app-shell { padding: 24px 20px 56px; }
 .viewport.app { width: 100%; max-width: 1180px; margin: 0 auto; border-radius: 22px; }
 
+/* ════════ 🌸 Pastel garden 테마 (토큰 오버라이드) ════════
+   로즈 #C75F71 · 핑크 #F0B8B8 · 세이지 #A2AE9D · 브라운 #54463A
+   텍스트용은 대비 확보를 위해 진한 파생색 사용 */
+:root {
+  --brand: #C75F71; --brand-700: #AE4E60; --brand-bg: #FBE7EA;   /* primary = 더스티 로즈 */
+  --income: #5F7A57; --income-bg: #EDF1E9;     /* 수입 = 딥 세이지 */
+  --expense: #C75F71; --expense-bg: #FBE7EA;   /* 지출 = 로즈 */
+  --save: #5F7A57; --save-bg: #EDF1E9;          /* 저축 = 딥 세이지 */
+  --mint: #8FA086; --mint-bg: #EDF1E9; --mint-mid: #BFC9B6;
+  --rose: #C75F71; --rose-bg: #FBE7EA; --rose-mid: #E6A6AF;
+  --coral: #D98E7B;
+  --blue: #8FA086; --blue-bg: #EDF1E9; --blue-mid: #C0CABA;     /* 차트 '블루' → 세이지 */
+  --sky: #C9B7AE;
+  --yellow: #D49A78; --yellow-bg: #F6E8DD; --yellow-mid: #E6C3A6;  /* 따뜻한 테라코타 */
+  --purple: #54463A; --purple-mid: #8A7C6E;    /* 대출 = 브라운 */
+  --person-c: #9A8F80; --person-c-bg: #EFEBE5; /* 공통 = 토프 */
+  --person-j: #C75F71; --person-j-bg: #FBE7EA; /* 지영 = 로즈 */
+  --person-s: #8FA086; --person-s-bg: #EDF1E9; /* 승화 = 세이지 */
+  --tag-common: var(--person-c); --tag-common-bg: var(--person-c-bg);
+  --tag-jiyoung: var(--person-j); --tag-jiyoung-bg: var(--person-j-bg);
+  --tag-seunghwa: var(--person-s); --tag-seunghwa-bg: var(--person-s-bg);
+  --fixed-c: #54463A; --variable-c: #C75F71;   /* 고정=브라운 / 변동=로즈 */
+  --nw-house: #8FA086; --nw-invest: #C75F71;   /* 순자산: 가계=세이지 / 투자=로즈 */
+  --paper: #FAF6F2; --paper-2: #F2ECE6; --line: #ECE5DF; --line-soft: #F5F0EB;
+}
+body {
+  background:
+    radial-gradient(120% 80% at 8% 0%, #F7DCDC 0%, transparent 55%),
+    radial-gradient(120% 90% at 100% 6%, #E6ECE0 0%, transparent 52%),
+    #FAF6F2 !important;
+  background-attachment: fixed !important;
+}
+.kpi.accent-loan .kpi-val { color: #54463A; }   /* 대출 = 브라운 */
+
 /* ── 거래 수정 모달 ── */
 .modal-overlay { position: fixed; inset: 0; background: rgba(22,28,45,.36);
   display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 16px; }
@@ -43,9 +77,6 @@ select.modal-input { appearance: none; -webkit-appearance: none; cursor: pointer
 .cal-item { font-size: 10.5px; line-height: 1.35; color: var(--ink); display: flex; flex-direction: column; margin-bottom: 3px; }
 .cal-item .cal-amt { color: var(--expense); font-weight: 700; font-variant-numeric: tabular-nums; }
 @media (max-width: 640px) { .cal-cell { min-height: 56px; padding: 4px; } .cal-item { font-size: 9px; } }
-
-/* ── 대출 전용 진한 보라 accent (가독성 확보) ── */
-.kpi.accent-loan .kpi-val { color: #6D4FB8; }
 
 /* ── 목표 진행률 ── */
 .goal-prog { height: 12px; border-radius: 999px; background: var(--paper-2); overflow: hidden; margin: 10px 0; }

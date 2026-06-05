@@ -380,7 +380,7 @@ function LoanView() {
                 </div>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
                   <div style={{ textAlign: 'right' }}>
-                    <div className="num" style={{ fontWeight: 700, fontSize: 17, color: '#6D4FB8' }}>{WON(ln.balance)}</div>
+                    <div className="num" style={{ fontWeight: 700, fontSize: 17, color: 'var(--purple)' }}>{WON(ln.balance)}</div>
                     <div style={{ fontSize: 11.5, color: 'var(--ink-3)' }}>/ {WON(ln.principal)}</div>
                   </div>
                   <button className="btn ghost sm" title="삭제" onClick={() => deleteLoan(ln)}
