@@ -512,6 +512,33 @@ function doPost(e) {
        KAKAO_CLIENT_ID / KAKAO_CLIENT_SECRET / KAKAO_REFRESH_TOKEN
    - 매일 시간 트리거로 sendLoanReminderKakao 실행
    - refresh_token으로 access_token을 매번 갱신해 사용 */
+// 한국 공휴일(주말 포함) 영업일 보정 — Nager.Date 무료 API, 연 1회 캐시
+function krHolidays(year) {
+  var props = PropertiesService.getScriptProperties();
+  var key = 'KR_HOL_' + year;
+  var cached = props.getProperty(key);
+  if (cached) { try { return JSON.parse(cached); } catch (e) {} }
+  try {
+    var res = UrlFetchApp.fetch('https://date.nager.at/api/v3/PublicHolidays/' + year + '/KR', { muteHttpExceptions: true });
+    var arr = JSON.parse(res.getContentText());
+    var dates = arr.map(function (h) { return h.date; });   // ['2026-01-01', ...]
+    props.setProperty(key, JSON.stringify(dates));
+    return dates;
+  } catch (e) { return []; }
+}
+function isHolidayKR(d, holidays) {
+  var w = d.getDay();
+  if (w === 0 || w === 6) return true;   // 주말
+  var s = d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+  return holidays.indexOf(s) >= 0;
+}
+function nextBusinessDay(d, holidays) {
+  var x = new Date(d.getTime());
+  var guard = 0;
+  while (isHolidayKR(x, holidays) && guard < 15) { x.setDate(x.getDate() + 1); guard++; }
+  return x;
+}
+
 function sendLoanReminderKakao() {
   var props = PropertiesService.getScriptProperties();
   var clientId = props.getProperty('KAKAO_CLIENT_ID');
@@ -528,22 +555,34 @@ function sendLoanReminderKakao() {
   if (!tok.access_token) { Logger.log('토큰 갱신 실패: ' + tokRes.getContentText()); return; }
   if (tok.refresh_token) props.setProperty('KAKAO_REFRESH_TOKEN', tok.refresh_token); // 회전 시 저장
 
-  // 2. 내일(D-1) 납부 예정 대출
+  // 2. 내일(D-1)이 '실제 출금일'인 대출 — 자동이체는 납부일이 주말·공휴일이면 다음 영업일로 순연
+  //    (메모에 '직접'이 있으면 직접이체로 보고 순연 없이 그대로)
   var today = new Date();
   var tmr = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
-  var tmrDay = tmr.getDate();
-  var loans = buildLoans(today).loans.filter(function (l) {
-    return parseInt(l.payDay, 10) === tmrDay;
+  var holidays = krHolidays(tmr.getFullYear());
+  var dim = new Date(tmr.getFullYear(), tmr.getMonth() + 1, 0).getDate();
+  var due = [];
+  buildLoans(today).loans.forEach(function (l) {
+    var pd = parseInt(l.payDay, 10);
+    if (!(pd >= 1 && pd <= 31)) return;
+    var base = new Date(tmr.getFullYear(), tmr.getMonth(), Math.min(pd, dim));
+    var manual = String(l.memo || '').indexOf('직접') >= 0;
+    var eff = manual ? base : nextBusinessDay(base, holidays);
+    if (eff.getMonth() === tmr.getMonth() && eff.getDate() === tmr.getDate()) {
+      l._shifted = (eff.getDate() !== Math.min(pd, dim)); l._origDay = pd;
+      due.push(l);
+    }
   });
-  if (!loans.length) { Logger.log('내일 납부 대출 없음'); return; }
+  if (!due.length) { Logger.log('내일 출금 대출 없음'); return; }
 
   // 3. 메시지
   var total = 0;
-  var lines = loans.map(function (l) {
+  var lines = due.map(function (l) {
     total += l.monthly;
-    return '- ' + (l.lender || '') + ' ' + l.name + ' ' + Math.round(l.monthly).toLocaleString() + '원';
+    var note = l._shifted ? ' (' + l._origDay + '일→영업일 순연)' : '';
+    return '- ' + (l.lender || '') + ' ' + l.name + ' ' + Math.round(l.monthly).toLocaleString() + '원' + note;
   });
-  var msg = '🔔 내일(' + (tmr.getMonth() + 1) + '/' + tmrDay + ') 대출 납부 예정\n'
+  var msg = '🔔 내일(' + (tmr.getMonth() + 1) + '/' + tmr.getDate() + ') 대출 납부(출금) 예정\n'
     + lines.join('\n') + '\n합계 ' + Math.round(total).toLocaleString() + '원';
 
   // 4. 카카오 나에게 보내기
